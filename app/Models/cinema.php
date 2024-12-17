@@ -1,0 +1,18 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+
+class cinema extends Model
+{
+    use HasFactory;
+    protected $table = 'cinema';
+    protected $fillable = [
+        'cinema_name',
+        'cinema_address',
+        'cinema_contact',
+        'cinema_ditributer'
+    ];
+}

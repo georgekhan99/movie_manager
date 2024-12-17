@@ -1,6 +1,8 @@
 <?php
 
+use App\Http\Controllers\Controller;
 use Illuminate\Foundation\Application;
+use Illuminate\Routing\Controller as RoutingController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -32,4 +34,7 @@ Route::middleware([
     Route::get('/dashboard', function () {
         return Inertia::render('Dashboard');
     })->name('dashboard');
+
+    Route::get('dashboard/adduser',[App\Http\Controllers\CinemaController::class, 'getCinemaPageload'])->name('dashboard.adduser');
+    Route::post('dashboard/addCinemas', [App\Http\Controllers\CinemaController::class, 'addCinemas'])->name('dashboard.addCinemas');
 });
