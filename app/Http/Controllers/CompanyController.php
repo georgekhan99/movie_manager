@@ -60,14 +60,31 @@ class CompanyController extends Controller
     }
 
     public function EditCompanyData($id){
-        // $CompanyData = Company::firstOrFail($id);
-        $companyData = Company::find($id);
+        $companyData = Company::where('company.id', $id)
+        ->leftJoin('label', 'label.id', '=', 'company.label_id')
+        ->select(
+        'company.id as id',
+        'company.company_legalname as legalName',
+        'company.company_brand_name as BrandName',
+        'company.company_organization as Organization',
+        'company.company_parent_company as Parent_Company',
+        'company.company_CVR as CVR',
+        'company.company_address_1 as address_1',
+        'company.company_address_2 as address_2',
+        'company.company_zip_code as zip_code',
+        'company.company_city as City',
+        'company.company_state as State',
+        'company.company_Country as Country',
+        'label.label_name',
+        'label.id'
+        )
+        ->first();
+        $labels = label::all();
+    
         return Inertia::render('AdminDashboard/Company/EditCompany',[
-            'CompanyData' => $companyData
+            'CompanyData' => $companyData,
+            'labels' => $labels
         ]);
-
-
-
 
     }
 
