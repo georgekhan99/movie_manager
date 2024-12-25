@@ -11,13 +11,13 @@ class CinemaController extends Controller
 
     public function getCinemaPageload(){
         $dataList = cinema::all();
-        return Inertia::render('adduserpage', ['dataList' => $dataList]);
+        return Inertia::render('Dashboard.CreateCompanyPage', ['dataList' => $dataList]);
     }
     
     private function getCinemasTable(){
         $dataList = cinema::all();
-        return Inertia::render('adduserpage', ['dataList' => $dataList]);
-
+        return Inertia::render('Dashboard.CreateCompanyPage', ['dataList' => $dataList]);
+        // Additional logic can be added here if needed
     }
 
     public function addCinemas(Request $request){

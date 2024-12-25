@@ -25,16 +25,41 @@ Route::get('/', function () {
         'phpVersion' => PHP_VERSION,
     ]);
 });
-
-Route::middleware([
-    'auth:sanctum',
-    config('jetstream.auth_session'),
-    'verified',
-])->group(function () {
+//Admin
+Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified',])->group(function () {
     Route::get('/dashboard', function () {
-        return Inertia::render('Dashboard');
-    })->name('dashboard');
+        return Inertia::render('AdminDashboard/Dashboard');
+    })->name('adminpage.dashboard');
+    //User Manager
+    Route::get('/dashboard/createuser', [App\Http\Controllers\UsersController::class, 'createUserPage'])->name('adminpage.CreateUserPage');
+    Route::get('/dashboard/user/list',[App\Http\Controllers\UsersController::class, 'getUserTable'])->name('adminpage.userlist');
+    Route::get('/dashboard/user/{id}/edit',[App\Http\Controllers\UsersController::class, 'editUserPage'])->name('admin.edit.user');
+    Route::post('/dashboard/create/user',[App\Http\Controllers\UsersController::class, 'createUser'])->name('create.user');
+    Route::get('/dashboard/user/delete/{id}', [App\Http\Controllers\UsersController::class, 'deleteUser'])->name('delete.user');
+    Route::post('/dashboard/user/update', [App\Http\Controllers\UsersController::class, 'updateUser'])->name('update.user');
 
-    Route::get('dashboard/adduser',[App\Http\Controllers\CinemaController::class, 'getCinemaPageload'])->name('dashboard.adduser');
-    Route::post('dashboard/addCinemas', [App\Http\Controllers\CinemaController::class, 'addCinemas'])->name('dashboard.addCinemas');
+    //Company 
+    Route::get('/dashboard/company/list', function (){
+        return Inertia::render('AdminDashboard/Company/CompanyManager');
+    })->name('company.companyList');
+    Route::get('/dashboard/getlabel', [App\Http\Controllers\CompanyController::class, 'getLabel'])->name('company.getlabel');
+    Route::post('/dashboard/company/add', [App\Http\Controllers\CompanyController::class, 'SavecompanyData'])->name('company.save_company');
+    Route::get('/dashboard/get/company/all',[App\Http\Controllers\CompanyController::class, 'getCompanyTableData'])->name('get.company.all');
+    Route::get('/dashboard/company/{id}/edit', [App\Http\Controllers\CompanyController::class, 'EditCompanyData'])->name('company.edit');
+
+
+    //Admin Cinema
+    Route::get('/dashboard/cinema/create', function () {
+        return Inertia::render('AdminDashboard/CinemaManager/CreateCinema');
+    })->name('adminpage.cinema.create');
+    //All Cinema
+    Route::get('/dashboard/cinema', function () {
+        return Inertia::render('AdminDashboard/CinemaManager/AllCinemas');
+    })->name('adminpage.cinema.AllCinemas');
+
+    Route::get('dashboard/adduser', [App\Http\Controllers\CinemaController::class, 'getCinemaPageload'])->name('dashboard.adduser');
 });
+
+
+
+
