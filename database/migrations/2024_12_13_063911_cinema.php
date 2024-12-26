@@ -14,7 +14,8 @@ return new class extends Migration
        Schema::create('cinema', function(Blueprint $table){
          $table->id()->autoIncrement();
          $table->string('cinema_name')->null();
-         $table->string('cinema_address')->null();
+         $table->string('cinema_address_1')->null();
+         $table->string('cinema_address_2')->null();
          $table->string('cinema_contact')->null();
          $table->string('cinema_ditributer')->null();
          $table->timestamps();

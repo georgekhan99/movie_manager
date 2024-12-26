@@ -6,7 +6,6 @@ let showPlacement = ref<boolean>(false);
 
 const handleraddInput = () => {
     inputCount.value += 1;
-    console.log(inputCount.value);
 };
 </script>
 
@@ -191,7 +190,7 @@ const handleraddInput = () => {
                 </div>
                 <!-- End Placement Details -->
                 <button
-                    @click="() => { showPlacement = true;}"
+                    @click.prevent="() => { showPlacement = true;}"
                     class="flex w-50 justify-center rounded bg-primary p-3 font-medium text-gray hover:bg-opacity-90"
                 >
                     {{ showPlacement === false ? "Add Placement" : "submit" }}

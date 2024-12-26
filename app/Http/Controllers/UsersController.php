@@ -107,7 +107,10 @@ class UsersController extends Controller
 
     public function deleteUser($id)
     {
+        DB::table('company_users')->where('users_id', '=', $id)->delete();
         DB::table('users')->where('id', '=', $id)->delete();
+        
         return redirect()->route('adminpage.userlist')->with('success', 'User deleted successfully.');
+
     }
 }

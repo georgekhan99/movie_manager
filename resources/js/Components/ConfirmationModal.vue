@@ -6,7 +6,7 @@ const emit = defineEmits(['close']);
 defineProps({
     show: {
         type: Boolean,
-        default: true,
+        default: false,
     },
     maxWidth: {
         type: String,

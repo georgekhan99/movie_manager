@@ -1,7 +1,5 @@
 <?php
-
 namespace App\Http\Controllers;
-
 use App\Models\cinema;
 use Illuminate\Http\Request;
 use Inertia\Inertia;

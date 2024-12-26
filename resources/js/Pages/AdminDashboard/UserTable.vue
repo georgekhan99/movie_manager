@@ -25,8 +25,9 @@ const props = defineProps({
 
 const showConfirmDeleteUserModal = ref(false);
 
-const confirmDeleteUser = () => {
+const confirmDeleteUser = (id) => {
     showConfirmDeleteUserModal.value = true;
+    selectedUserId.value = id;
 };
 
 const closeModal = () => {
@@ -40,16 +41,24 @@ const query = reactive({
     sortDirection: props.filters.sortDirection || "asc",
 });
 
+//Selected User
+
+const selectedUserId = ref(null)
+
 // Update filters and fetch new data
 const applyFilters = () => {
-    router.get(window.location.href, {
-        search: query.search,
-        sortColumn: query.sortColumn,
-        sortDirection: query.sortDirection,
-    }, {
-        preserveState: true,
-        preserveScroll: true,
-    });
+    router.get(
+        window.location.href,
+        {
+            search: query.search,
+            sortColumn: query.sortColumn,
+            sortDirection: query.sortDirection,
+        },
+        {
+            preserveState: true,
+            preserveScroll: true,
+        }
+    );
 };
 
 // Watch for changes to the filters prop and update the reactive query
@@ -62,12 +71,21 @@ watch(
     },
     { immediate: true }
 );
-</script>
 
+const DeleteUseronConfirm = () => {
+    router.visit(`/dashboard/user/delete/${selectedUserId.value}`,{
+        method:'get'
+    })
+    console.log(selectedUserId.value);
+    closeModal();
+    selectedUserId.value = null
+};
+</script>
 
 <template>
     <DefaultLayout title="UserList">
         <!-- Filter and Sort Header -->
+
         <div
             class="grid grid-cols-12 justify-center items-center h-20 mb-5 rounded-sm border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark"
         >
@@ -84,14 +102,24 @@ watch(
 
             <!-- Sort Dropdown -->
             <div class="col-span-3 px-4">
-                <select v-model="query.sortColumn" @change="applyFilters" class="input-style">
+                <select
+                    v-model="query.sortColumn"
+                    @change="applyFilters"
+                    class="input-style"
+                >
                     <option value="users.name">Sort by Name</option>
                     <option value="user_roles.name">Sort by Role</option>
-                    <option value="company.company_legalname">Sort by Company</option>
+                    <option value="company.company_legalname">
+                        Sort by Company
+                    </option>
                 </select>
             </div>
             <div class="col-span-2 h-10 px-2">
-                <select v-model="query.sortDirection" @change="applyFilters" class="input-style">
+                <select
+                    v-model="query.sortDirection"
+                    @change="applyFilters"
+                    class="input-style"
+                >
                     <option value="asc">Ascending</option>
                     <option value="desc">Descending</option>
                 </select>
@@ -133,8 +161,12 @@ watch(
                 class="grid grid-cols-6 border-t border-stroke py-4.5 px-4 dark:border-strokedark sm:grid-cols-8 md:px-6 2xl:px-7.5"
             >
                 <div class="col-span-3 flex items-center">
-                    <div class="flex flex-col gap-4 sm:flex-row sm:items-center">
-                        <p class="text-sm font-medium text-black dark:text-white">
+                    <div
+                        class="flex flex-col gap-4 sm:flex-row sm:items-center"
+                    >
+                        <p
+                            class="text-sm font-medium text-black dark:text-white"
+                        >
                             {{ user.name + " " + user.surname }}
                         </p>
                     </div>
@@ -146,7 +178,7 @@ watch(
                 </div>
                 <div class="col-span-1 flex items-center">
                     <p class="text-sm font-medium text-black dark:text-white">
-                        {{ user.company_legalname || '-' }}
+                        {{ user.company_legalname || "-" }}
                     </p>
                 </div>
                 <div class="col-span-1 flex items-center justify-center">
@@ -177,30 +209,38 @@ watch(
                     </Link>
                     <button
                         class="hover:text-primary mx-3 relative group"
-                        @click="confirmDeleteUser"
+                        @click="confirmDeleteUser(user.id)"
                     >
                         <div v-html="Icon.Trash"></div>
                     </button>
+                                   <!-- Confirmation Modal -->
+                <ConfirmationModal
+                    :show="showConfirmDeleteUserModal"
+                    @close="closeModal"
+                >
+                    <template v-slot:title>Confirm Delete User</template>
+                    <template v-slot:content>
+                        <div class="h-20 flex items-center">
+                            <h2 class="text-xl">
+                                Are you sure to delete this user?
+                            </h2>
+                        </div>
+                    </template>
+                    <template v-slot:footer>
+                        <div class="flex justify-end">
+                            <DangerButton
+                                @click="DeleteUseronConfirm()"
+                                class="mr-3"
+                                >Confirm</DangerButton
+                            >
+                            <PrimaryButton @click="closeModal"
+                                >Cancel</PrimaryButton
+                            >
+                        </div>
+                    </template>
+                </ConfirmationModal>
                 </div>
             </div>
         </div>
-        <!-- Confirmation Modal -->
-        <ConfirmationModal
-            :show="showConfirmDeleteUserModal"
-            @close="closeModal"
-        >
-            <template v-slot:title>Confirm Delete User</template>
-            <template v-slot:content>
-                <div class="h-20 flex items-center">
-                    <h2 class="text-xl">Are you sure to delete this user?</h2>
-                </div>
-            </template>
-            <template v-slot:footer>
-                <div class="flex justify-end">
-                    <DangerButton class="mr-3">Confirm</DangerButton>
-                    <PrimaryButton @click="closeModal">Cancel</PrimaryButton>
-                </div>
-            </template>
-        </ConfirmationModal>
     </DefaultLayout>
 </template>

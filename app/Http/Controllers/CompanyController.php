@@ -5,8 +5,10 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\label;
 use App\Models\Company;
+use App\Models\Company_users;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
+
 
 class CompanyController extends Controller
 {
@@ -61,7 +63,7 @@ class CompanyController extends Controller
 
     public function EditCompanyData($id){
         $companyData = Company::where('company.id', $id)
-        ->leftJoin('label', 'label.id', '=', 'company.label_id')
+        ->leftJoin('label', 'company.label_id', '=', 'label.id')
         ->select(
         'company.id as id',
         'company.company_legalname as legalName',
@@ -76,7 +78,7 @@ class CompanyController extends Controller
         'company.company_state as State',
         'company.company_Country as Country',
         'label.label_name',
-        'label.id'
+        'label.id as label.id'
         )
         ->first();
         $labels = label::all();
@@ -86,6 +88,65 @@ class CompanyController extends Controller
             'labels' => $labels
         ]);
 
+    }
+
+    public function getUsers(){
+        $users = DB::table('users')
+        ->join('user_roles', 'user_roles.id', '=', 'users.user_role_id')
+        ->select(['users.id', 'users.name','users.surname', 'user_roles.name as role_name', 'users.user_company_id'])
+        ->get();
+        return response()->json($users);
+
+    return response()->json($users);
+
+    }
+
+    public function AttacheUserToCompany(Request $request){
+
+        $validated = $request->validate([
+          'users_id' => 'required|unique:company_users,company_id',  
+        ]);
+
+       $data = Company_users::create([
+            'users_id' => $validated['users_id'],
+            'company_id' => $request->company_id
+        ]);
+
+        if($data){
+            return redirect()->back()->with('success', 'User attached to company successfully.');
+        }else{
+            return redirect()->back()->withErrors(['error' => 'Failed to attach user to company.']);
+        }
+
+    }
+
+    public function getCompanyUsersdata($companyId){
+        $users = Company_users::with(['user', 'company'])
+        ->join('users', 'company_users.users_id', '=', 'users.id')
+        ->join('user_roles', 'users.user_role_id', '=', 'user_roles.id')
+        ->where('company_users.company_id', $companyId)
+        ->select(
+            'users.id',
+            'users.name',
+            'users.surname',
+            'users.email',
+            'user_roles.name as role_name',
+            'company_users.created_at',
+            'company_users.id as c_id'
+        )
+        ->orderBy('users.name')
+        ->get();
+        return response()->json($users);
+    }
+
+    public function DeleteCompanyUsersdata($id){
+        $data = Company_users::where('id', $id)->delete();
+
+        if($data){
+            return redirect()->back()->withInput()->with('success', 'User Deleted Successfully');
+        }else{
+            return redirect()->back()->withInput()->withErrors(['error' => 'Failed to Delete User']);
+        }
     }
 
     

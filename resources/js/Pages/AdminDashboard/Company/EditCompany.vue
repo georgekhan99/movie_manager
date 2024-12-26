@@ -1,12 +1,85 @@
 <script setup lang="ts">
 import DefaultLayout from "@/layouts/DefaultLayout.vue";
-import { router, useForm } from "@inertiajs/vue3";
+import { router, useForm, Link  } from "@inertiajs/vue3";
 import PrimaryButton from "@/Components/PrimaryButton.vue";
 import { Icon } from "../../../../Constraint/ContrantIcon";
+import { onMounted, onUnmounted, ref,watch } from "vue";
+import Modal from "@/Components/Modal.vue";
 const props = defineProps({
     CompanyData: Object,
     labels: Object,
 });
+
+const showModal = ref(false);
+let Addusers = ref({});
+let attachedUsers = ref([]);
+
+const getAttachedUsers = async (companyId: number) => {
+    try {
+        if (!companyId) {
+            console.error('Invalid company ID:', companyId);
+            return;
+        }
+        
+        const response = await fetch(`/dashboard/get/company/${companyId}/users`, {
+            headers: {
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        attachedUsers.value = data;
+        
+    } catch (error) {
+        console.error('Error fetching users:', error);
+    }
+};
+
+watch(() => props.CompanyData?.id, (newId) => {
+    if (newId) {
+        getAttachedUsers(newId);
+    }
+}, { immediate: true });
+
+onMounted(() => {
+    console.log('Company ID on mount:', props.CompanyData.id); // Debug log
+    if (props.CompanyData && props.CompanyData.id) {
+        getAttachedUsers(props.CompanyData.id);
+    }
+});
+
+onUnmounted(()=> {
+    attachedUsers.value = [];
+})
+
+const openModal = async () => {
+    showModal.value = true;
+    let users = await fetch("/dashboard/company/addusers");
+    Addusers.value = await users.json();
+};
+const closeModal = () => {
+    showModal.value = false;
+};
+
+const AttachUsertoCompany = async ([companyId, userId]) => {
+    try{
+        await router.post(route('add.company_users', {
+            company_id: companyId,
+            users_id: userId
+        }))
+        closeModal(); 
+        getAttachedUsers(props.CompanyData.id);
+    }catch(error){
+        console.log(error)
+    }finally{
+        closeModal(); 
+    }
+};
 
 const form = useForm({
     id: props.CompanyData.id,
@@ -284,14 +357,15 @@ const form = useForm({
 
             <!-- Add User To Company View -->
             <div class="p-6.5">
-                <div class="w-full flex items-center justify-between border-b border-stroke">
+                <div
+                    class="w-full flex items-center justify-between border-b border-stroke"
+                >
                     <p class="text-xl font-medium mb-2">Sub Company</p>
-                    <button
-                        type="submit"
+                    <Link :href="route('adminpage.dashboard')"
                         class="w-30 mb-2 flex w-2xl justify-center rounded bg-primary p-3 font-medium text-gray hover:bg-opacity-70"
                     >
                         <div v-html="Icon.Plus"></div>
-                    </button>
+                    </Link>
                 </div>
                 <!-- Table Header -->
                 <div
@@ -308,34 +382,45 @@ const form = useForm({
                     </div>
                 </div>
 
-                <div class="grid grid-cols-6 border-t border-stroke py-4.5 px-4 dark:border-strokedark sm:grid-cols-8 md:px-6 2xl:px-7.5">
+                <div
+                    class="grid grid-cols-6 border-t border-stroke py-4.5 px-4 dark:border-strokedark sm:grid-cols-8 md:px-6 2xl:px-7.5"
+                >
                     <div class="col-span-3 flex items-center">
-                    <div class="flex flex-col gap-4 sm:flex-row sm:items-center">
-                        <p class="text-md font-medium text-black dark:text-white">
-                            Company Name 1
+                        <div
+                            class="flex flex-col gap-4 sm:flex-row sm:items-center"
+                        >
+                            <p
+                                class="text-md font-medium text-black dark:text-white"
+                            >
+                                Company Name 1
+                            </p>
+                        </div>
+                    </div>
+                    <div class="col-span-3 hidden items-center sm:flex">
+                        <p
+                            class="text-md font-medium text-black dark:text-white"
+                        >
+                            Movie Manager
                         </p>
                     </div>
-                </div>
-                <div class="col-span-3 hidden items-center sm:flex">
-                    <p class="text-md font-medium text-black dark:text-white">
-                        Movie Manager
-                    </p>
-                </div>
-                <div class="col-span-1 flex items-center">
-                    <p class="text-md font-medium text-black dark:text-white hover:text-primary cursor-pointer">
-                       Delete /  Edit
-                    </p>
-                </div>
-
+                    <div class="col-span-1 flex items-center">
+                        <p
+                            class="text-md font-medium text-black dark:text-white hover:text-primary cursor-pointer"
+                        >
+                            Delete / Edit
+                        </p>
+                    </div>
                 </div>
             </div>
             <!-- End Table Header -->
             <!-- Company User -->
             <div class="p-6.5">
-                <div class="w-full flex items-center justify-between border-b border-stroke">
+                <div
+                    class="w-full flex items-center justify-between border-b border-stroke"
+                >
                     <p class="text-xl mb-2 font-medium">Users</p>
                     <button
-                        type="submit"
+                        @click="openModal()"
                         class="w-30 mb-2 flex w-2xl justify-center rounded bg-primary p-3 font-medium text-gray hover:bg-opacity-70"
                     >
                         <div v-html="Icon.Plus"></div>
@@ -346,7 +431,7 @@ const form = useForm({
                     class="grid grid-cols-6 border-t border-stroke py-4.5 px-4 dark:border-strokedark sm:grid-cols-8 md:px-6 2xl:px-7.5"
                 >
                     <div class="col-span-3 flex items-center">
-                        <p class="font-medium">Company Name</p>
+                        <p class="font-medium">User Name</p>
                     </div>
                     <div class="col-span-3 hidden items-center sm:flex">
                         <p class="font-medium">Role</p>
@@ -356,30 +441,200 @@ const form = useForm({
                     </div>
                 </div>
 
-                <div class="grid grid-cols-6 border-t border-stroke py-4.5 px-4 dark:border-strokedark sm:grid-cols-8 md:px-6 2xl:px-7.5">
+                <div v-for="user in attachedUsers" class="grid grid-cols-6 border-t border-stroke py-4.5 px-4 dark:border-strokedark sm:grid-cols-8 md:px-6 2xl:px-7.5">
                     <div class="col-span-3 flex items-center">
-                    <div class="flex flex-col gap-4 sm:flex-row sm:items-center">
-                        <p class="text-md font-medium text-black dark:text-white">
-                            Company Name 1
+                        <div
+                            class="flex flex-col gap-4 sm:flex-row sm:items-center"
+                        >
+                            <p
+                                class="text-md font-medium text-black dark:text-white"
+                            >
+                                {{ user.name }}  {{ user.surname }}
+                            </p>
+                        </div>
+                    </div>
+                    <div class="col-span-3 hidden items-center sm:flex">
+                        <p
+                            class="text-md font-medium text-black dark:text-white"
+                        >
+                        {{ user.role_name }}
                         </p>
                     </div>
-                </div>
-                <div class="col-span-3 hidden items-center sm:flex">
-                    <p class="text-md font-medium text-black dark:text-white">
-                        Distributor
-                    </p>
-                </div>
-                <div class="col-span-1 flex items-center">
-                    <p class="text-md font-medium text-black dark:text-white hover:text-primary cursor-pointer">
-                       Delete /  Edit
-                    </p>
-                </div>
-
+                    <div class="col-span-1 flex items-centers">
+                        <Link preserve-scroll :href="`/dashboard/delete/company/${user.c_id}/users`" as="button"  class="text-md font-medium text-black dark:text-white hover:text-primary cursor-pointer">
+                            <div v-html="Icon.Trash" /> 
+                        </Link>
+                    </div>
                 </div>
             </div>
             <!-- End Company User -->
+            <!-- Modal Open -->
+            <Modal :show="showModal">
+                <div
+                    class="rounded-sm border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark"
+                >
+                    <div
+                        class="border-b flex justify-between border-stroke px-6.5 py-4 dark:border-strokedark"
+                    >
+                        <h3
+                            class="font-medium text-black text-xl dark:text-white"
+                        >
+                            Assign user to company
+                        </h3>
+                        <h3
+                            @click="closeModal()"
+                            class="font-medium text-black text-xl dark:text-white cursor-pointer hover:text-danger"
+                        >
+                            x
+                        </h3>
+                    </div>
+                    <div
+                        class="grid grid-cols-6 border-t border-stroke py-4.5 px-4 dark:border-strokedark sm:grid-cols-8 md:px-6 2xl:px-7.5"
+                    >
+                        <div class="col-span-3 flex items-center">
+                            <p class="font-medium">Username</p>
+                        </div>
+                        <div class="col-span-3 hidden items-center sm:flex">
+                            <p class="font-medium">Role</p>
+                        </div>
+                        <div class="col-span-1 flex items-center">
+                            <p class="font-medium">Action</p>
+                        </div>
+                    </div>
 
+                    <div
+                        v-for="user in Addusers"
+                        class="grid grid-cols-6 border-t border-stroke py-4.5 px-4 dark:border-strokedark sm:grid-cols-8 md:px-6 2xl:px-7.5"
+                    >
+                        <div class="col-span-3 flex items-center">
+                            <div
+                                class="flex flex-col gap-4 sm:flex-row sm:items-center"
+                            >
+                                <p
+                                    class="text-md font-medium text-black dark:text-white"
+                                >
+                                    {{ user.name }} {{ user.surname }}
+                                </p>
+                            </div>
+                        </div>
+                        <div class="col-span-3 hidden items-center sm:flex">
+                            <p
+                                class="text-md font-medium text-black dark:text-white"
+                            >
+                                {{ user.role_name }}
+                            </p>
+                        </div>
+                        <div class="col-span-1 flex items-center">
+                            <button
+                                @click="
+                                    AttachUsertoCompany([
+                                        props.CompanyData.id,
+                                        user.id,
+                                    ])
+                                "
+                                class="w-10 flex w-2xl justify-center rounded bg-primary p-3 font-medium text-gray hover:bg-opacity-70"
+                            >
+                                <div>
+                                    <svg
+                                        width="15"
+                                        viewBox="0 0 24 24"
+                                        fill="#f4f4f4"
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        transform="rotate(0 0 0)"
+                                    >
+                                        <path
+                                            d="M11.2502 6C11.2502 5.58579 11.586 5.25 12.0002 5.25C12.4145 5.25 12.7502 5.58579 12.7502 6V11.2502H18.0007C18.4149 11.2502 18.7507 11.586 18.7507 12.0002C18.7507 12.4145 18.4149 12.7502 18.0007 12.7502H12.7502V18.0007C12.7502 18.4149 12.4145 18.7507 12.0002 18.7507C11.586 18.7507 11.2502 18.4149 11.2502 18.0007V12.7502H6C5.58579 12.7502 5.25 12.4145 5.25 12.0002C5.25 11.586 5.58579 11.2502 6 11.2502H11.2502V6Z"
+                                            fill="#f4f4f4"
+                                        ></path>
+                                    </svg>
+                                </div>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </Modal>
 
+            <Modal :show="SubcompanyModal">
+                <div
+                    class="rounded-sm border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark"
+                >
+                    <div
+                        class="border-b flex justify-between border-stroke px-6.5 py-4 dark:border-strokedark"
+                    >
+                        <h3
+                            class="font-medium text-black text-xl dark:text-white"
+                        >
+                            Assign user to company
+                        </h3>
+                        <h3
+                            @click="CloseSubcompanyModal()"
+                            class="font-medium text-black text-xl dark:text-white cursor-pointer hover:text-danger"
+                        >
+                            x
+                        </h3>
+                    </div>
+                    <div
+                        class="grid grid-cols-6 border-t border-stroke py-4.5 px-4 dark:border-strokedark sm:grid-cols-8 md:px-6 2xl:px-7.5"
+                    >
+                        <div class="col-span-3 flex items-center">
+                            <p class="font-medium">Username</p>
+                        </div>
+                        <div class="col-span-3 hidden items-center sm:flex">
+                            <p class="font-medium">Role</p>
+                        </div>
+                        <div class="col-span-1 flex items-center">
+                            <p class="font-medium">Action</p>
+                        </div>
+                    </div>
+
+                    <div
+                     
+                        class="grid grid-cols-6 border-t border-stroke py-4.5 px-4 dark:border-strokedark sm:grid-cols-8 md:px-6 2xl:px-7.5"
+                    >
+                        <div class="col-span-3 flex items-center">
+                            <div
+                                class="flex flex-col gap-4 sm:flex-row sm:items-center"
+                            >
+                                <p
+                                    class="text-md font-medium text-black dark:text-white"
+                                >
+                                   Company_1
+                                </p>
+                            </div>
+                        </div>
+                        <div class="col-span-3 hidden items-center sm:flex">
+                            <p
+                                class="text-md font-medium text-black dark:text-white"
+                            >
+                               Cinema
+                            </p>
+                        </div>
+                        <div class="col-span-1 flex items-center">
+                            <button
+
+                                class="w-10 flex w-2xl justify-center rounded bg-primary p-3 font-medium text-gray hover:bg-opacity-70"
+                            >
+                                <div>
+                                    <svg
+                                        width="15"
+                                        viewBox="0 0 24 24"
+                                        fill="#f4f4f4"
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        transform="rotate(0 0 0)"
+                                    >
+                                        <path
+                                            d="M11.2502 6C11.2502 5.58579 11.586 5.25 12.0002 5.25C12.4145 5.25 12.7502 5.58579 12.7502 6V11.2502H18.0007C18.4149 11.2502 18.7507 11.586 18.7507 12.0002C18.7507 12.4145 18.4149 12.7502 18.0007 12.7502H12.7502V18.0007C12.7502 18.4149 12.4145 18.7507 12.0002 18.7507C11.586 18.7507 11.2502 18.4149 11.2502 18.0007V12.7502H6C5.58579 12.7502 5.25 12.4145 5.25 12.0002C5.25 11.586 5.58579 11.2502 6 11.2502H11.2502V6Z"
+                                            fill="#f4f4f4"
+                                        ></path>
+                                    </svg>
+                                </div>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </Modal>
+
+            <!-- End Modal -->
 
             <!-- / Add User To Company View -->
         </div>

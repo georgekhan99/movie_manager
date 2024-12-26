@@ -37,6 +37,7 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified',
     Route::post('/dashboard/create/user',[App\Http\Controllers\UsersController::class, 'createUser'])->name('create.user');
     Route::get('/dashboard/user/delete/{id}', [App\Http\Controllers\UsersController::class, 'deleteUser'])->name('delete.user');
     Route::post('/dashboard/user/update', [App\Http\Controllers\UsersController::class, 'updateUser'])->name('update.user');
+    
 
     //Company 
     Route::get('/dashboard/company/list', function (){
@@ -46,6 +47,10 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified',
     Route::post('/dashboard/company/add', [App\Http\Controllers\CompanyController::class, 'SavecompanyData'])->name('company.save_company');
     Route::get('/dashboard/get/company/all',[App\Http\Controllers\CompanyController::class, 'getCompanyTableData'])->name('get.company.all');
     Route::get('/dashboard/company/{id}/edit', [App\Http\Controllers\CompanyController::class, 'EditCompanyData'])->name('company.edit');
+    Route::get('/dashboard/company/addusers',[App\Http\Controllers\CompanyController::class, 'getUsers'])->name('company.addusers');
+    Route::post('/dashboard/add/attachusers',[App\Http\Controllers\CompanyController::class, 'AttacheUserToCompany'])->name('add.company_users');
+    Route::get('/dashboard/get/company/{id}/users',[App\Http\Controllers\CompanyController::class, 'getCompanyUsersdata'] )->name('get.attached.users');
+    Route::get('/dashboard/delete/company/{id}/users', [App\Http\Controllers\CompanyController::class, 'DeleteCompanyUsersdata'] )->name('delete.company_user');
 
 
     //Admin Cinema
