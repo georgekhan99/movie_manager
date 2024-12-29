@@ -5,6 +5,7 @@ use Illuminate\Foundation\Application;
 use Illuminate\Routing\Controller as RoutingController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
+use App\Models\Company;
 
 /*
 |--------------------------------------------------------------------------
@@ -27,6 +28,7 @@ Route::get('/', function () {
 });
 //Admin
 Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified',])->group(function () {
+    Route::get('dashboard/adduser', [App\Http\Controllers\CinemaController::class, 'getCinemaPageload'])->name('dashboard.adduser');
     Route::get('/dashboard', function () {
         return Inertia::render('AdminDashboard/Dashboard');
     })->name('adminpage.dashboard');
@@ -52,17 +54,27 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified',
     Route::get('/dashboard/get/company/{id}/users',[App\Http\Controllers\CompanyController::class, 'getCompanyUsersdata'] )->name('get.attached.users');
     Route::get('/dashboard/delete/company/{id}/users', [App\Http\Controllers\CompanyController::class, 'DeleteCompanyUsersdata'] )->name('delete.company_user');
 
-
     //Admin Cinema
-    Route::get('/dashboard/cinema/create', function () {
-        return Inertia::render('AdminDashboard/CinemaManager/CreateCinema');
-    })->name('adminpage.cinema.create');
-    //All Cinema
-    Route::get('/dashboard/cinema', function () {
-        return Inertia::render('AdminDashboard/CinemaManager/AllCinemas');
-    })->name('adminpage.cinema.AllCinemas');
+    Route::get('/dashboard/cinema/create', [App\Http\Controllers\CinemaController::class, 'CreateCinemas'])->name('create.cinemas.noid');
 
-    Route::get('dashboard/adduser', [App\Http\Controllers\CinemaController::class, 'getCinemaPageload'])->name('dashboard.adduser');
+    Route::get('/dashboard/cinema/create/{id}', function ($id) {
+        $companyList = Company::all();
+        return Inertia::render('AdminDashboard/CinemaManager/CreateCinema', [
+            "companyList" => $companyList,
+            "Cinemas_id" => $id
+        ]);
+    })->name('adminpage.cinema.create.withid');
+    
+    //All Cinema
+    Route::get('/dashboard/cinema/', [App\Http\Controllers\CinemaController::class, 'getCinemaPageLoad'])->name('adminpage.cinema.AllCinemas');
+    Route::post('/dashboard/addcinema', [App\Http\Controllers\CinemaController::class, 'saveCinema'])->name('admin.save_cinema');
+
+    //Distributor Manager
+    Route::get('/distributor/add/movie', [App\Http\Controllers\DistributorController::class, 'getMoviePageLoad'])->name('distributor.add.movie');
+
+    
+    
+   
 });
 
 

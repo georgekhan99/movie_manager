@@ -34,7 +34,7 @@ const menuGroups = ref([
         route: 'adminpage.dashboard',
         children: [
         { label: 'All Cinemas', route: 'adminpage.cinema.AllCinemas' },
-        { label: 'Create Cinemas', route: 'adminpage.cinema.create' },
+        { label: 'Create Cinemas', route: 'create.cinemas.noid' },
        ]
       },
       {
@@ -45,6 +45,14 @@ const menuGroups = ref([
         { label: 'Add Booking', route: 'adminpage.dashboard' },
         { label: 'Manage Booking', route: 'adminpage.dashboard' },
        
+       ]
+      },
+      {
+        icon: Icon.Tile,
+        label: 'Distributor Manager',
+        children: [
+        { label: 'Add Movie', route: 'distributor.add.movie' },
+        // { label: 'Movie Manager', route: 'adminpage.dashboard' },
        ]
       },
      

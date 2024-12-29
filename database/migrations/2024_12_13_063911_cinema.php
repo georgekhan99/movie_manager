@@ -11,13 +11,16 @@ return new class extends Migration
      */
     public function up(): void
     {
-       Schema::create('cinema', function(Blueprint $table){
+       Schema::create('cinemas', function(Blueprint $table){
          $table->id()->autoIncrement();
-         $table->string('cinema_name')->null();
-         $table->string('cinema_address_1')->null();
-         $table->string('cinema_address_2')->null();
-         $table->string('cinema_contact')->null();
-         $table->string('cinema_ditributer')->null();
+         $table->string('cinema_name')->nullable();
+         $table->string('address_1')->nullable();
+         $table->string('address_2')->nullable();
+         $table->string('zip')->nullable();
+         $table->string('city')->nullable();
+         $table->string('state')->nullable();
+         $table->string('country')->nullable();
+         $table->foreignId('company_id')->constrained('company','id');
          $table->timestamps();
        });
     }
