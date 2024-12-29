@@ -1,30 +1,48 @@
 <?php
+
 namespace App\Http\Controllers;
+
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\DB;
 use App\Models\Cinemas;
 use App\Models\Company;
+use App\Models\Placement;
 
 class CinemaController extends Controller
 {
-    public function getCinemaPageLoad(){
+    public function getCinemaPageLoad()
+    {
         $cinemaList = DB::table('cinemas')
-        ->get();
+            ->get();
         return Inertia::render('AdminDashboard/CinemaManager/AllCinemas', [
             "cinemaList" => $cinemaList,
         ]);
     }
 
-    public function CreateCinemas() {
+    public function CreateCinemas()
+    {
         $companyList = Company::all();
 
         return Inertia::render('AdminDashboard/CinemaManager/CreateCinema', [
             "companyList" => $companyList
         ]);
     }
-    
-    public function saveCinema(Request $request){
+
+    function CreateCinemasWithId($id)
+    {
+        $companyList = Company::all();
+        $CinemasList = Cinemas::where('id', $id)
+            ->first();
+        return Inertia::render('AdminDashboard/CinemaManager/CreateCinema', [
+            "CinemasList" => $CinemasList,
+             "companyList" => $companyList,
+            "Cinemas_id" => $id
+        ]);
+    }
+
+    public function saveCinema(Request $request)
+    {
         $cinema = array();
         $cinema['cinema_name'] = $request->cinemas[0]['name'];
         $cinema['address_1'] = $request->cinemas[0]['address_1'];
@@ -44,30 +62,32 @@ class CinemaController extends Controller
         //     'cinemas.0.country' => 'required|string|max:255',
         //     'cinemas.0.company' => 'string|max:255',
         //     ]);
-            // Save the validated data to the database
-        $insert = Cinemas::create($cinema);
-        return redirect('/dashboard/cinema/create/' . $insert->id);
+        // Save the validated data to the database
+        if (!empty($cinema)) {
+            $insert = Cinemas::create($cinema);
+            return redirect('/dashboard/cinema/create/' . $insert->id);
         }
-    
-    public function savePlacement(Request $request){
-        $placements = array();
-        $placements['cinema_id']  = $request->cinema_id[0]['cinema_id'];
-        $placements['placement_name'] = $request->cinema_id[0]['placement_name'];
-        $placements['placement_description'] = $request->cinema_id[0]['placement_description'];
-        $placements['placement_width'] = $request->cinema_id[0]['placement_width'];
-        $placements['placement_height'] = $request->cinema_id[0]['placement_height'];
-        $placements['placement_colors'] = $request->cinema_id[0]['placement_colors'];
-        $placements['placement_material'] = $request->cinema_id[0]['placement_material'];
-        $placements['placement_price'] = $request->cinema_id[0]['placement_price'];
 
-
-        dd($placements);
-        
-
-        
-    }
-    
-
+        return response()->json('Nothing Data have yet');
     }
 
+    public function savePlacement(Request $request)
+    {
+        if (count($request->placement) == 1) {
+            $placement = array();
+            $placement['cinema_id']             = $request->placement[0]['cinema_id'];
+            $placement['placement_name']        = $request->placement[0]['name'];
+            $placement['placement_description'] = $request->placement[0]['description'];
+            $placement['placement_width']       = $request->placement[0]['width'];
+            $placement['placement_height']      = $request->placement[0]['height'];
+            $placement['placement_colors']      = $request->placement[0]['colors'];
+            $placement['placement_material']    = $request->placement[0]['material'];
+            $placement['placement_price']       = $request->placement[0]['price'];
+                Placement::create($placement);
+            }
 
+
+
+        // Placement::create($placements);
+    }
+}

@@ -3,7 +3,7 @@ import { ref, defineProps, onMounted } from "vue";
 import { router } from "@inertiajs/vue3";
 
 const props = defineProps({
-    companyList: Object,
+    CinemasList: Object,
     Cinemas_id: Number
 });
 
@@ -30,19 +30,7 @@ interface Cinemas {
     country: string;
     company_id: number;
 }
-
-const placements = ref<Placement[]>([
-    {
-        cinema_id: null,
-        name: "",
-        description: "",
-        height: "",
-        width: "",
-        colors: "",
-        material: "",
-        price: "",
-    },
-]);
+const placements = ref<Placement[]>([]);
 
 const cinemas = ref<Cinemas[]>([
     {
@@ -56,9 +44,7 @@ const cinemas = ref<Cinemas[]>([
         company_id: null,
     },
 ]);
-
-const showPlacement = ref(false);
-
+const showPlacement = ref(true);
 const addPlacement = () => {
     placements.value.push({
         cinema_id: cinemaId.value,
@@ -70,9 +56,7 @@ const addPlacement = () => {
         material: "",
         price: "",
     });
-
-    console.log(placements);
-
+    console.log(placements.value);
 };
 
 const removePlacement = (index: number) => {
@@ -82,6 +66,7 @@ const removePlacement = (index: number) => {
 onMounted(() => {
     const urlParts = window.location.pathname.split('/');
     cinemaId.value = parseInt(urlParts[4]);
+
 });
 
 const saveCinemas = () => {
@@ -90,11 +75,12 @@ const saveCinemas = () => {
     });
     showPlacement.value = true;
 };
-
+///dashboard/save/placement
 const savePlacement = () => {
-    console.log(props)
+    router.post('/dashboard/save/placement', {
+        placement: placements.value
+    })
 }
-
 
 const ChecksavedData = () => {
     let saved = router.page.url.split('/')[4]
@@ -139,7 +125,7 @@ const ChecksavedData = () => {
                             v-model="cinemas[0].address_1"
                             type="text"
                             class="input-style"
-                        />
+                         />
                     </div>
                 </div>
                 <!-- Address -->
@@ -253,7 +239,7 @@ const ChecksavedData = () => {
                 <button
                     class="mt-2 bg-blue-500 text-white p-2 rounded text-white p-2 rounded"
                     @click.prevent="saveCinemas"
-                    v-show="ChecksavedData()"
+                    
                 >
                     Submit
                 </button>
