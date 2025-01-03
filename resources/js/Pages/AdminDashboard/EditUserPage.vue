@@ -1,13 +1,17 @@
 <script setup lang="ts">
 import { computed, defineProps, onMounted, onUpdated, ref } from "vue";
 import { router, useForm } from "@inertiajs/vue3";
-import DefaultLayout from "@/layouts/DefaultLayout.vue";
+import DefaultLayout from "../../Layouts/DefaultLayout.vue";
+//@/layouts/DefaultLayout.vue
 const props = defineProps({
     user: Object,
     roleList: Array,
     company_list: Array,
     errors: Object,
 });
+
+
+
 const form = useForm({
     id: props.user.id,
     Name: props.user.name,

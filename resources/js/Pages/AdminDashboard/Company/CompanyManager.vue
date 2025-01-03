@@ -1,5 +1,6 @@
 <script setup>
-import DefaultLayout from "@/layouts/DefaultLayout.vue";
+import DefaultLayout from "../../../Layouts/DefaultLayout.vue";
+//@/layouts/DefaultLayout.vue
 import { onBeforeMount, ref } from "vue";
 import { Link, router } from "@inertiajs/vue3";
 

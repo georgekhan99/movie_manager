@@ -1,6 +1,7 @@
 <script setup>
-import HeaderArea from '@/components/Header/HeaderArea.vue'
-import SidebarArea from '@/Components/Sidebar/SidebarArea.vue'
+import HeaderArea from '../Components/Header/HeaderArea.vue'
+//@/components/Header/HeaderArea.vue
+import SidebarArea from '../Components/Sidebar/SidebarArea.vue'
 import { Head, Link, router } from "@inertiajs/vue3";
 defineProps({
     title: String,

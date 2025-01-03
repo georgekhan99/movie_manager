@@ -37,6 +37,20 @@
                     <label
                         class="mb-3 block text-sm font-bold text-black dark:text-white"
                     >
+                        Select Company
+                    </label>
+                    <select class="input-style" id="">
+                        <option value="">Company 1</option>
+                        <option value="">Company 2</option>
+                        <option value="">Company 3</option>
+                        <option value="">Company 4</option>
+                    </select>
+                    <!-- <InputError v-if="$page.props.errors.Surname" :message="$page.props.errors.Name" /> -->
+                </div>
+                <div class="mb-4.5">
+                    <label
+                        class="mb-3 block text-sm font-bold text-black dark:text-white"
+                    >
                         Premiere Date
                     </label>
                     <input

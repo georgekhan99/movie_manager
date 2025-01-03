@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import DefaultLayout from '@/layouts/DefaultLayout.vue'
+import DefaultLayout from '../../../Layouts/DefaultLayout.vue'
+//@/layouts/DefaultLayout.vue
 import CinemaInfomations from './patials/CinemaInfomations.vue'
 import CinemaTable from './patials/CinemaTable.vue'
 import { ref, defineProps } from 'vue'
@@ -33,15 +34,11 @@ const props = defineProps<{
           <div class="bg-white dark:bg-boxdark">
         <div v-for="cinema in cinemaList" :key="cinema.id" 
              class="grid grid-cols-12 border-t border-[#EEEEEE] px-5 py-4 dark:border-strokedark lg:px-7.5 2xl:px-11">
-          <div class="col-span-5">
+          <div class="col-span-10">
             <p class="text-[#637381] dark:text-bodydark">{{ cinema.cinema_name }}</p>
           </div>
-          <div class="col-span-6">
-            <p class="text-[#637381] dark:text-bodydark">
-              {{ cinema.company_id }}
-            </p>
-          </div>
-          <div class="col-span-1">
+
+          <div class="col-span-2">
             <Link href="/" class="float-left text-primary">
               View
             </Link>

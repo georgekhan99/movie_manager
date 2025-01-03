@@ -18,25 +18,15 @@ defineProps<{
 
 
 </script>
-
-
 <template>
-
-  
-
 <div class="max-w-full overflow-x-auto">
     <div class="min-w-[1170px]">
       <!-- table header start -->
       <div class="grid grid-cols-12 bg-[#F9FAFB] px-5 py-4 dark:bg-meta-4 lg:px-7.5 2xl:px-11 rounded-sm">
-        <div class="col-span-5">
+        <div class="col-span-10">
           <h5 class="font-medium text-[#637381] dark:text-bodydark">Cinema Name</h5>
         </div>
-
-        <div class="col-span-6">
-          <h5 class="font-medium text-[#637381] dark:text-bodydark">Type</h5>
-        </div>
-
-        <div class="col-span-1">
+        <div class="col-span-2">
           <h5 class="font-medium text-[#637381] dark:text-bodydark">Action</h5>
         </div>
       </div>

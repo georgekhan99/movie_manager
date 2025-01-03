@@ -22,7 +22,7 @@ class UsersController extends Controller
         $usersList = DB::table('user_roles')
             ->join('users', 'user_roles.id', '=', 'users.user_role_id')
             ->leftJoin('company', 'users.user_company_id', '=', 'company.id')
-            ->select('users.id', 'users.name', 'users.surname', 'user_roles.name as role', 'company.company_legalname')
+            ->select('users.id','users.name', 'users.surname', 'user_roles.name as role', 'company.company_legalname')
             ->orderBy($sortColumn, $sortDirection)
             ->get();
 

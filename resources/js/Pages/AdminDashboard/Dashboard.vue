@@ -1,5 +1,6 @@
 <script setup>
-import DefaultLayout from '@/layouts/DefaultLayout.vue';
+import DefaultLayout from '../../Layouts/DefaultLayout.vue';
+//@/layouts/DefaultLayout.vue
 import CreateCompanyPage from '@/Components/AdminDashboard/CreateCompanyPage.vue';
 </script>
 

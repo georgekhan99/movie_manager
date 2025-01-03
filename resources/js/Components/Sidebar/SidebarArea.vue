@@ -19,18 +19,18 @@ const menuGroups = ref([
     menuItems: [
       {
         icon: Icon.User,
-        label: 'User Manager',
+        label: 'Users',
         route: 'adminpage.dashboard',
         children: [
         { label: 'Create User', route: 'adminpage.CreateUserPage' },
         { label: 'User Manager', route: 'adminpage.userlist' },
-        { label: 'Create Company', route: 'adminpage.dashboard' },
+        { label: 'Create Company', route: 'adminpage.dashboard.add.company' },
         { label: 'Company Manager', route: 'company.companyList' },        
        ]
       },
       {
         icon: Icon.CinemaIcons,
-        label: 'Cinema Manager',
+        label: 'Cinemas',
         route: 'adminpage.dashboard',
         children: [
         { label: 'All Cinemas', route: 'adminpage.cinema.AllCinemas' },
@@ -39,7 +39,7 @@ const menuGroups = ref([
       },
       {
         icon: Icon.Tile,
-        label: 'Booking Manager',
+        label: 'Booking',
         route: 'adminpage.dashboard',
         children: [
         { label: 'Add Booking', route: 'adminpage.dashboard' },
@@ -49,10 +49,10 @@ const menuGroups = ref([
       },
       {
         icon: Icon.Tile,
-        label: 'Distributor Manager',
+        label: 'Movie',
         children: [
         { label: 'Add Movie', route: 'distributor.add.movie' },
-        // { label: 'Movie Manager', route: 'adminpage.dashboard' },
+        { label: 'Movie Manager', route: 'distributor.movie.all' },
        ]
       },
      
@@ -108,6 +108,12 @@ const menuGroups = ref([
                 :index="index"
                 :rute="menuItem.route"
               />
+            <ul class="mb-4 ml-4 text-sm font-medium text-bodydark2">
+              <SidebarItem 
+              item="My Dashboard"
+              rute="adminpage.dashboard.add.company"
+              />
+            </ul>
             </ul>
           </div>
         </template>

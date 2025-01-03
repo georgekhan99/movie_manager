@@ -50,7 +50,7 @@ class CompanyController extends Controller
                 'company_state' => $validated['Region'],
                 'company_Country' => $validated['Country'],
             ]);
-        }
+         }
     }
 
     public function getCompanyTableData(){

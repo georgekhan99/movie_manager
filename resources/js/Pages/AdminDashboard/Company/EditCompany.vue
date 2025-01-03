@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import DefaultLayout from "@/layouts/DefaultLayout.vue";
+import DefaultLayout from "../../../Layouts/DefaultLayout.vue";
 import { router, useForm, Link  } from "@inertiajs/vue3";
 import PrimaryButton from "@/Components/PrimaryButton.vue";
 import { Icon } from "../../../../Constraint/ContrantIcon";
