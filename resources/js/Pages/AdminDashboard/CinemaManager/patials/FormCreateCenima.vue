@@ -237,7 +237,7 @@ const ChecksavedData = () => {
 
                 <!-- Add Difference Address -->
                 <div>
-                    <div class="mb-5.5 mt-5 flex items-center justify-between border w-60 h-10 p-3 rounded-md">
+                    <div class="mb-5.5 mt-5 flex items-center justify-between border w-70 h-10 p-3 rounded-md">
                         <label for="formCheckbox" class="flex cursor-pointer">
                             <div class="relative pt-0.5">
                                 <input
@@ -268,7 +268,7 @@ const ChecksavedData = () => {
                                     </span>
                                 </div>
                             </div>
-                            <p>Difference Billing Address</p>
+                            <p>Difference Delivery Address</p>
                         </label>
                     </div>
                 <div v-show="AdddifferenceAddress">

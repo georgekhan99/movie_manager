@@ -55,6 +55,7 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified',
     //Admin Cinema
     Route::get('/dashboard/cinema/create', [App\Http\Controllers\CinemaController::class, 'CreateCinemas'])->name('create.cinemas.noid');
     Route::get('/dashboard/cinema/create/{id}', [App\Http\Controllers\CinemaController::class, 'CreateCinemasWithId'])->name('adminpage.cinema.create.withid');
+    Route::get('/dashboard/cinema/{id}/view', [App\Http\Controllers\CinemaController::class, 'getCinemaListPageload'])->name('adminpage.cinema.placements.list');
 
     //All Cinema
     Route::get('/dashboard/cinema/', [App\Http\Controllers\CinemaController::class, 'getCinemaPageLoad'])->name('adminpage.cinema.AllCinemas');
@@ -69,6 +70,12 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified',
     Route::get('/distributor/movie/{id}/edit',[App\Http\Controllers\DistributorController::class, 'getEditMoviePage'])->name('distributor.movie.edit');
     Route::get('/distributor/request/edit/{id}/placement',[App\Http\Controllers\DistributorController::class, 'editPlacement'])->name('distributor.edit.placement');
     Route::get('/distributor/bookings/calendar',[App\Http\Controllers\DistributorController::class, 'showCalendar'])->name('distributor.show.showCalendar');
+
+    //Booking Calendar
+    Route::get('bookings/calendar/view',[App\Http\Controllers\BookingsController::class, 'getCalendarPageload'])->name('bookigs.calendar.view');
+    Route::get('bookings/duration/view',[App\Http\Controllers\BookingsController::class, 'showDuration'])->name('bookigs.duration.view');
+    Route::post('/duration/update/{id}',[App\Http\Controllers\BookingsController::class, 'UpdateDeadline'])->name('bookigs.duration.update');
+
 });
 
 

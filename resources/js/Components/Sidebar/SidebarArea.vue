@@ -42,8 +42,10 @@ const menuGroups = ref([
         label: 'Booking',
         route: 'adminpage.dashboard',
         children: [
-        { label: 'Add Booking', route: 'adminpage.dashboard' },
-        { label: 'Manage Booking', route: 'adminpage.dashboard' },
+        // { label: 'Add Booking', route: 'adminpage.dashboard' },
+        // { label: 'Manage Booking', route: 'adminpage.dashboard' },
+        { label: 'Calendar', route: 'bookigs.calendar.view' },
+        { label: 'Duration', route: 'bookigs.duration.view' }
        
        ]
       },
@@ -53,6 +55,7 @@ const menuGroups = ref([
         children: [
         { label: 'Add Movie', route: 'distributor.add.movie' },
         { label: 'Movie Manager', route: 'distributor.movie.all' },
+        { label: 'Duration', route: 'distributor.movie.all' }
        ]
       },
      

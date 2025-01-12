@@ -17,7 +17,6 @@ class UsersController extends Controller
         // Get sorting parameters
         $sortColumn = $request->input('sortColumn', 'users.name'); // Default to sorting by name
         $sortDirection = $request->input('sortDirection', 'asc'); // Default to ascending order
-
         // Fetch and sort data
         $usersList = DB::table('user_roles')
             ->join('users', 'user_roles.id', '=', 'users.user_role_id')
@@ -25,7 +24,6 @@ class UsersController extends Controller
             ->select('users.id','users.name', 'users.surname', 'user_roles.name as role', 'company.company_legalname')
             ->orderBy($sortColumn, $sortDirection)
             ->get();
-
         return Inertia::render('AdminDashboard/UserTable', [
             'usersList' => $usersList,
             'filters' => [
@@ -39,13 +37,11 @@ class UsersController extends Controller
     {
         $roleList = UserRole::all();
         $company_list = Company::all();
-
         return Inertia::render('AdminDashboard/CreateUserPage', ['users_role' => $roleList, 'company_list' => $company_list]);
     }
 
     public function createUser(Request $request)
     {
-
         $validate = $request->validate([
             'Name' => ['required', 'string', 'max:255', 'unique:users,name'],
             'Surname' => ['required', 'string', 'max:255'],
@@ -100,7 +96,6 @@ class UsersController extends Controller
             $user->password = bcrypt($request->Password);
         }
         $user->save();
-
         return redirect()->route('adminpage.userlist')->with('success', 'User updated successfully.');
     }
 

@@ -4,7 +4,7 @@ import DefaultLayout from '../../../Layouts/DefaultLayout.vue'
 import CinemaInfomations from './patials/CinemaInfomations.vue'
 import CinemaTable from './patials/CinemaTable.vue'
 import { ref, defineProps } from 'vue'
-import { Link } from "@inertiajs/vue3";
+import { Link, router } from "@inertiajs/vue3";
 import { Icon } from '../../../../Constraint/ContrantIcon'
 interface Cinema {
     id: number;
@@ -39,7 +39,7 @@ const props = defineProps<{
           </div>
 
           <div class="col-span-2">
-            <Link href="/" class="float-left text-primary">
+            <Link :href="`/dashboard/cinema/${cinema.id}/view`" class="float-left text-primary">
               View
             </Link>
           </div>

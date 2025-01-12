@@ -29,6 +29,24 @@ class CinemaController extends Controller
         ]);
     }
 
+    public function getCinemaListPageload($id){
+        $cinema = DB::table('cinemas')
+        ->join('cinema_placements', 'cinemas.id', '=', 'cinema_placements.cinema_id')
+        ->where('cinemas.id', $id)
+        ->select('cinemas.*', 
+        'cinema_placements.placement_name as placement_name',
+        'cinema_placements.placement_width as placement_width',
+        'cinema_placements.placement_height as placement_height',
+        'cinema_placements.placement_colors as placement_colors',
+        'cinema_placements.placement_material as placement_material',
+        )
+        ->get();
+        return Inertia::render('AdminDashboard/CinemaManager/Cinema.PlacementList', [
+            "PageId" => $id,
+            "CinemaData" => $cinema
+        ]);
+    }
+
     function CreateCinemasWithId($id)
     {
         $companyList = Company::all();
@@ -36,7 +54,7 @@ class CinemaController extends Controller
             ->first();
         return Inertia::render('AdminDashboard/CinemaManager/CreateCinema', [
             "CinemasList" => $CinemasList,
-             "companyList" => $companyList,
+            "companyList" => $companyList,
             "Cinemas_id" => $id
         ]);
     }
@@ -73,7 +91,7 @@ class CinemaController extends Controller
 
     public function savePlacement(Request $request)
     {
-        if (count($request->placement) == 1) {
+        if (!empty($request->placement[0]['cinema_id'])) {
             $placement = array();
             $placement['cinema_id']             = $request->placement[0]['cinema_id'];
             $placement['placement_name']        = $request->placement[0]['name'];
@@ -83,11 +101,7 @@ class CinemaController extends Controller
             $placement['placement_colors']      = $request->placement[0]['colors'];
             $placement['placement_material']    = $request->placement[0]['material'];
             $placement['placement_price']       = $request->placement[0]['price'];
-                Placement::create($placement);
-            }
-
-
-
-        // Placement::create($placements);
+            Placement::create($placement);
+        }
     }
 }
