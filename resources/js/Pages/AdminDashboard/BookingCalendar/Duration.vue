@@ -2,6 +2,7 @@
 import DefaultLayout from "../../../Layouts/DefaultLayout.vue";
 import { defineProps, ref } from "vue";
 import { router as Inertia } from '@inertiajs/vue3'
+import dayjs from 'dayjs'
 
 // Interface for your database durations
 interface Duration {
@@ -17,7 +18,7 @@ const editingDate = ref<{ id: number; newDate: string | null }>({
 const showPopover = ref(false);
 
 // Props: Your existing database data
-defineProps({
+const props = defineProps({
     duration: Array<Duration>, // Data fetched from the database
 });
 
@@ -25,35 +26,31 @@ defineProps({
 const calculateEndDate = (startDate: string): string => {
     const startDateObj = new Date(startDate);
     const endDateObj = new Date(startDateObj);
-    endDateObj.setDate(startDateObj.getDate() + 15); // Add 14 days for a 15-day period
+    endDateObj.setDate(startDateObj.getDate() + 16); // Add 14 days for a 15-day period
     return endDateObj.toISOString().split("T")[0];
 };
 
 // Function to calculate the next start date (1 day after the previous end date)
 const calculateNextStartDate = (endDate: string): string => {
     const endDateObj = new Date(endDate);
-    endDateObj.setDate(endDateObj.getDate() - 1); // Add 1 day
+    endDateObj.setDate(endDateObj.getDate() - 2); // Add 1 day
     return endDateObj.toISOString().split("T")[0];
 };
 
-// Function to calculate the production deadline (14 days before start_date)
-const calculateProductionDeadline = (startDate: string): string => {
-    const date = new Date(startDate);
-    date.setDate(date.getDate() - 15); // Subtract 14 days
-    return date.toISOString().split("T")[0];
+const calculateNextEndDate = (startDate: string): string => {
+    const nextStart = new Date(startDate);
+    nextStart.setDate(nextStart.getDate()+ 14); // 14 days to include the start date
+    return nextStart.toISOString().split("T")[0];
 };
 
 // Function to calculate the grace date (35 days before start_date)
 const calculateGraceDate = (startDate: string): string => {
     const date = new Date(startDate);
-    date.setDate(date.getDate() - 35); // Subtract 35 days
-    return date.toISOString().split("T")[0];
-};
+    // date.setDate(date.getDate() - 35); // Subtract 35 days
+    // return date.toISOString().split("T")[0];
+    return dayjs(startDate).subtract(35, 'day').format('YYYY-MM-DD');
 
-const subtractOneDay = (dateString: string): string => {
-    const date = new Date(dateString);
-    date.setDate(date.getDate() - 1);
-    return date.toISOString().split("T")[0];
+
 };
 
 const updateDate = () => {
@@ -64,11 +61,13 @@ const updateDate = () => {
         console.log(`${editingDate.value.newDate} and ID ${editingDate.value.id}`)
         showPopover.value = false;
     }
+
 };
+
 </script>
 
 <template>
-    
+
     <DefaultLayout title="Booking Calendar">
         <!-- Date -->
         <div class="p-6 bg-white rounded shadow-md">
@@ -126,20 +125,11 @@ const updateDate = () => {
                                     ).toLocaleDateString("en-GB")
                                 }}
                                 -
-                                {{
-                                    new Date(
-                                        calculateEndDate(
-                                            index === 0
-                                                ? subtractOneDay(row.start_date)
-                                                : calculateNextStartDate(
-                                                      calculateEndDate(
-                                                          duration[index - 1]
-                                                              .start_date
-                                                      )
-                                                  )
-                                        )
-                                    ).toLocaleDateString("en-GB")
+                                {{ 
+                                new Date(calculateNextEndDate(row.start_date)).toLocaleDateString("en-GB")
                                 }}
+                            
+
                             </td>
                             <!-- Display delivery date -->
                             <td class="border border-gray-300 px-4 py-2">
@@ -160,21 +150,8 @@ const updateDate = () => {
                             <td
                                 class="border border-gray-300 px-4 py-2 flex items-center justify-between"
                             >
-                            {{  (row.production_deadline) }}
-                                <!-- {{
-                                    new Date(
-                                        calculateProductionDeadline(
-                                            index === 0
-                                                ? row.start_date
-                                                : calculateNextStartDate(
-                                                      calculateEndDate(
-                                                          duration[index - 1]
-                                                              .start_date
-                                                      )
-                                                  )
-                                        )
-                                    ).toLocaleDateString("en-GB")
-                                }} -->
+                            {{ new Date(row.production_deadline).toLocaleDateString("en-GB") }}
+
                                 <div class="relative group">
                                     <button
                                         @click="() => { showPopover = true; editingDate.id = row.id; }"

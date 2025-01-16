@@ -7,6 +7,18 @@ const props = defineProps({
     Cinemas_id: Number,
 });
 
+const imageFile = ref(null);
+const imagePreview = ref(null);
+
+const previewImage = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+        imageFile.value = file;
+        imagePreview.value = URL.createObjectURL(file);
+        console.log(imagePreview.value);
+    }
+};
+
 const cinemaId = ref<number | null>(null);
 const AdddifferenceAddress = ref(false);
 
@@ -19,6 +31,8 @@ interface Placement {
     colors: string;
     material: string;
     price: string;
+    image: null;
+    imagePreview: null;
 }
 
 interface Cinemas {
@@ -30,6 +44,7 @@ interface Cinemas {
     state: string;
     country: string;
     company_id: number;
+    image: null;
 }
 const placements = ref<Placement[]>([]);
 
@@ -43,9 +58,11 @@ const cinemas = ref<Cinemas[]>([
         state: "",
         country: "",
         company_id: null,
+        image: null,
     },
 ]);
 const showPlacement = ref(true);
+
 const addPlacement = () => {
     placements.value.push({
         cinema_id: cinemaId.value,
@@ -56,8 +73,17 @@ const addPlacement = () => {
         colors: "",
         material: "",
         price: "",
+        image: null,
+        imagePreview: null,
     });
-    console.log(placements.value);
+};
+
+const previewPlacement = (event, index: number) => {
+    const file = event.target.files[0];
+    if (file) {
+        placements.value[index].image = file;
+        placements.value[index].imagePreview = URL.createObjectURL(file);
+    }
 };
 
 const removePlacement = (index: number) => {
@@ -211,7 +237,8 @@ const ChecksavedData = () => {
                             Company
                         </label>
                         <select
-                            v-model="cinemas[0].company_id"
+                            v-model="cinemas
+                            .company_id"
                             class="input-style"
                         >
                             <option
@@ -231,13 +258,29 @@ const ChecksavedData = () => {
                         >
                             Logo
                         </label>
-                        <input type="file" class="input-style" />
+                        <input
+                            @change="previewImage"
+                            type="file"
+                            class="input-style"
+                        />
+                    </div>
+                </div>
+                <div v-if="imageFile">
+                    <h3>Image Preview</h3>
+                    <div class="w-[250px] h-[250px] mt-2 rounded-md">
+                        <img
+                            :src="imagePreview"
+                            class="object-cover w-[250px] h-[250px] mt-2 rounded-md"
+                            alt=""
+                        />
                     </div>
                 </div>
 
                 <!-- Add Difference Address -->
                 <div>
-                    <div class="mb-5.5 mt-5 flex items-center justify-between border w-70 h-10 p-3 rounded-md">
+                    <div
+                        class="mb-5.5 mt-5 flex items-center justify-between border w-70 h-10 p-3 rounded-md"
+                    >
                         <label for="formCheckbox" class="flex cursor-pointer">
                             <div class="relative pt-0.5">
                                 <input
@@ -271,96 +314,95 @@ const ChecksavedData = () => {
                             <p>Difference Delivery Address</p>
                         </label>
                     </div>
-                <div v-show="AdddifferenceAddress">
-                <div class="mb-4.5 flex flex-col gap-6 xl:flex-row">
-                    <div class="w-full xl:w-1/1">
-                        <label
-                            class="mb-3 block text-sm font-medium text-black dark:text-white"
-                        >
-                            Address 1
-                        </label>
-                        <input
-                            v-model="cinemas[0].address_1"
-                            type="text"
-                            class="input-style"
-                        />
-                    </div>
-                </div>
-                <!-- Address -->
-                <div class="mb-4.5 flex flex-col gap-6 xl:flex-row">
-                    <div class="w-full xl:w-1/1">
-                        <label
-                            class="mb-3 block text-sm font-medium text-black dark:text-white"
-                        >
-                            Address 2
-                        </label>
-                        <input
-                            v-model="cinemas[0].address_2"
-                            type="text"
-                            class="input-style"
-                        />
-                    </div>
-                </div>
-                <!-- End Address -->
+                    <div v-show="AdddifferenceAddress">
+                        <div class="mb-4.5 flex flex-col gap-6 xl:flex-row">
+                            <div class="w-full xl:w-1/1">
+                                <label
+                                    class="mb-3 block text-sm font-medium text-black dark:text-white"
+                                >
+                                    Address 1
+                                </label>
+                                <input
+                                    v-model="cinemas[0].address_1"
+                                    type="text"
+                                    class="input-style"
+                                />
+                            </div>
+                        </div>
+                        <!-- Address -->
+                        <div class="mb-4.5 flex flex-col gap-6 xl:flex-row">
+                            <div class="w-full xl:w-1/1">
+                                <label
+                                    class="mb-3 block text-sm font-medium text-black dark:text-white"
+                                >
+                                    Address 2
+                                </label>
+                                <input
+                                    v-model="cinemas[0].address_2"
+                                    type="text"
+                                    class="input-style"
+                                />
+                            </div>
+                        </div>
+                        <!-- End Address -->
 
-                <!-- Zip/City -->
-                <div class="mb-4.5 flex flex-col gap-6 xl:flex-row">
-                    <div class="w-full xl:w-1/2">
-                        <label
-                            class="mb-3 block text-sm font-medium text-black dark:text-white"
-                        >
-                            Zip
-                        </label>
-                        <input
-                            v-model="cinemas[0].zip"
-                            type="text"
-                            class="input-style"
-                        />
+                        <!-- Zip/City -->
+                        <div class="mb-4.5 flex flex-col gap-6 xl:flex-row">
+                            <div class="w-full xl:w-1/2">
+                                <label
+                                    class="mb-3 block text-sm font-medium text-black dark:text-white"
+                                >
+                                    Zip
+                                </label>
+                                <input
+                                    v-model="cinemas[0].zip"
+                                    type="text"
+                                    class="input-style"
+                                />
+                            </div>
+                            <div class="w-full xl:w-1/2">
+                                <label
+                                    class="mb-3 block text-sm font-medium text-black dark:text-white"
+                                >
+                                    City
+                                </label>
+                                <input
+                                    v-model="cinemas[0].city"
+                                    type="text"
+                                    class="input-style"
+                                />
+                            </div>
+                        </div>
+                        <!-- End Zip/City -->
+                        <!-- Regioin / Country -->
+                        <div class="mb-4.5 flex flex-col gap-6 xl:flex-row">
+                            <div class="w-full xl:w-1/2">
+                                <label
+                                    class="mb-3 block text-sm font-medium text-black dark:text-white"
+                                >
+                                    Region/State
+                                </label>
+                                <input
+                                    v-model="cinemas[0].state"
+                                    type="text"
+                                    class="input-style"
+                                />
+                            </div>
+                            <div class="w-full xl:w-1/2">
+                                <label
+                                    class="mb-3 block text-sm font-medium text-black dark:text-white"
+                                >
+                                    Country
+                                </label>
+                                <input
+                                    v-model="cinemas[0].country"
+                                    type="text"
+                                    class="input-style"
+                                />
+                            </div>
+                        </div>
+                        <!-- End Regioin / Country -->
                     </div>
-                    <div class="w-full xl:w-1/2">
-                        <label
-                            class="mb-3 block text-sm font-medium text-black dark:text-white"
-                        >
-                            City
-                        </label>
-                        <input
-                            v-model="cinemas[0].city"
-                            type="text"
-                            class="input-style"
-                        />
-                    </div>
-                </div>
-                <!-- End Zip/City -->
-                <!-- Regioin / Country -->
-                <div class="mb-4.5 flex flex-col gap-6 xl:flex-row">
-                    <div class="w-full xl:w-1/2">
-                        <label
-                            class="mb-3 block text-sm font-medium text-black dark:text-white"
-                        >
-                            Region/State
-                        </label>
-                        <input
-                            v-model="cinemas[0].state"
-                            type="text"
-                            class="input-style"
-                        />
-                    </div>
-                    <div class="w-full xl:w-1/2">
-                        <label
-                            class="mb-3 block text-sm font-medium text-black dark:text-white"
-                        >
-                            Country
-                        </label>
-                        <input
-                            v-model="cinemas[0].country"
-                            type="text"
-                            class="input-style"
-                        />
-                    </div>
-                </div>
-                <!-- End Regioin / Country -->
-            </div>
-
                 </div>
                 <!-- submit Cinema -->
                 <button
@@ -400,37 +442,6 @@ const ChecksavedData = () => {
                                 placeholder="Enter place name"
                             />
 
-                            <!-- Placement Details -->
-                            <div class="mb-4.5 flex flex-col gap-6 xl:flex-row">
-                                <div class="w-full xl:w-1/2">
-                                    <label
-                                        class="mb-3 block text-sm font-medium text-black dark:text-white"
-                                    >
-                                        Description
-                                    </label>
-                                    <input
-                                        type="text"
-                                        v-model="placement.description"
-                                        class="input-style"
-                                        placeholder="Enter description"
-                                    />
-                                </div>
-
-                                <div class="w-full xl:w-1/2">
-                                    <label
-                                        class="mb-3 block text-sm font-medium text-black dark:text-white"
-                                    >
-                                        Height
-                                    </label>
-                                    <input
-                                        type="text"
-                                        v-model="placement.height"
-                                        class="input-style"
-                                        placeholder="Enter height"
-                                    />
-                                </div>
-                            </div>
-
                             <div class="mb-4.5 flex flex-col gap-6 xl:flex-row">
                                 <div class="w-full xl:w-1/2">
                                     <label
@@ -445,52 +456,153 @@ const ChecksavedData = () => {
                                         placeholder="Enter width"
                                     />
                                 </div>
-
                                 <div class="w-full xl:w-1/2">
+                                    <label
+                                        class="mb-3 block text-sm font-medium text-black dark:text-white"
+                                    >
+                                        Height
+                                    </label>
+                                    <input
+                                        type="text"
+                                        v-model="placement.height"
+                                        class="input-style"
+                                        placeholder="Enter height"
+                                    />
+                                </div>
+                            </div>
+                            <div class="w-full">
+                                <div
+                                    class="mb-4.5 flex flex-col gap-6 xl:flex-row"
+                                >
+                                    <div class="w-full xl:w-1/2">
+                                        <label
+                                            class="mb-3 block text-sm font-medium text-black dark:text-white"
+                                        >
+                                            Material
+                                        </label>
+                                        <select
+                                            v-model="placement.material"
+                                            name="materials"
+                                            class="input-style"
+                                        >
+                                            <option value="plasstic">
+                                                plasstic
+                                            </option>
+                                            <option value="Vinyl">Vinyl</option>
+                                            <option value="Vinyl">
+                                                Meterials 1
+                                            </option>
+                                            <option value="Vinyl">
+                                                Meterials 2
+                                            </option>
+                                            <option value="Vinyl">
+                                                Meterials 3
+                                            </option>
+                                        </select>
+                                    </div>
+
+                                    <div class="w-full xl:w-1/2">
+                                        <label
+                                            class="mb-3 block text-sm font-medium text-black dark:text-white"
+                                        >
+                                            Price
+                                        </label>
+                                        <input
+                                            type="text"
+                                            v-model="placement.price"
+                                            class="input-style"
+                                            placeholder="Enter price"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Description -->
+                            <div
+                                class="mb-4.5 flex flex-col gap-6 xl:flex-row w-full"
+                            >
+                                <div class="w-1/2 flex items-center">
                                     <label
                                         class="mb-3 block text-sm font-medium text-black dark:text-white"
                                     >
                                         Colors
                                     </label>
-                                    <input
-                                        type="text"
-                                        v-model="placement.colors"
-                                        class="input-style"
-                                        placeholder="Enter colors"
-                                    />
+                                    <div>
+                                        <input
+                                            type="radio"
+                                            v-model="placement.colors"
+                                            value="1-4"
+                                            id="color-1"
+                                            class="input-style"
+                                        />
+                                        <label
+                                            for="color-1"
+                                            class="ml-2 text-sm text-black dark:text-white"
+                                        >
+                                            1-4
+                                        </label>
+                                    </div>
+                                    <div>
+                                        <input
+                                            type="radio"
+                                            v-model="placement.colors"
+                                            value="Pantone"
+                                            id="color-2"
+                                            class="input-style"
+                                        />
+                                        <label
+                                            for="color-2"
+                                            class="ml-2 text-sm text-black dark:text-white"
+                                        >
+                                            Pantone
+                                        </label>
+                                    </div>
                                 </div>
-                            </div>
 
-                            <div class="mb-4.5 flex flex-col gap-6 xl:flex-row">
                                 <div class="w-full xl:w-1/2">
                                     <label
                                         class="mb-3 block text-sm font-medium text-black dark:text-white"
                                     >
-                                        Material
+                                        Description
                                     </label>
-                                    <input
-                                        type="text"
-                                        v-model="placement.material"
+                                    <textarea
+                                        v-model="placement.description"
                                         class="input-style"
-                                        placeholder="Enter material"
-                                    />
-                                </div>
-
-                                <div class="w-full xl:w-1/2">
-                                    <label
-                                        class="mb-3 block text-sm font-medium text-black dark:text-white"
-                                    >
-                                        Price
-                                    </label>
-                                    <input
-                                        type="text"
-                                        v-model="placement.price"
-                                        class="input-style"
-                                        placeholder="Enter price"
+                                        placeholder="Enter description"
+                                        cols="4"
                                     />
                                 </div>
                             </div>
-
+                            <div class="mb-4.5 flex flex-col gap-6 xl:flex-row w-full">
+                            <div class="xl:w-1/2">
+                                <label
+                                    class="mb-3 block text-sm font-medium text-black dark:text-white"
+                                    >Upload Image</label
+                                >
+                                <input
+                                    @change="
+                                        (event) =>
+                                            previewPlacement(event, index)
+                                    "
+                                    type="file"
+                                    class="input-style"
+                                />
+                            </div>
+                            <div class="w-full xl:w-1/2">
+                                <!-- Show Image Preview for the Current Placement -->
+                                <div v-if="placement.imagePreview">
+                                    <h3>Image Preview</h3>
+                                    <div
+                                        class="w-[250px] h-[250px] mt-2 rounded-md"
+                                    >
+                                        <img
+                                            :src="placement.imagePreview"
+                                            class="object-cover w-[250px] h-[250px] rounded-md"
+                                            alt="Placement Image Preview"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                             <!-- Remove Placement Button -->
                             <button
                                 class="mt-2 bg-red-500 text-white p-2 rounded"

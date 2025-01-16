@@ -23,7 +23,6 @@ class CinemaController extends Controller
     public function CreateCinemas()
     {
         $companyList = Company::all();
-
         return Inertia::render('AdminDashboard/CinemaManager/CreateCinema', [
             "companyList" => $companyList
         ]);
@@ -70,16 +69,13 @@ class CinemaController extends Controller
         $cinema['state'] = $request->cinemas[0]['state'];
         $cinema['country'] = $request->cinemas[0]['country'];
         $cinema['company_id'] = $request->cinemas[0]['company_id'];
-        // $validated = $request->validate([
-        //     'cinemas.0.name' => 'required|string|max:255',
-        //     'cinemas.0.address_1' => 'required|string|max:255',
-        //     'cinemas.0.address_2' => 'nullable|string|max:255',
-        //     'cinemas.0.zip' => 'required|string|max:10',
-        //     'cinemas.0.city' => 'required|string|max:255',
-        //     'cinemas.0.state' => 'required|string|max:255',
-        //     'cinemas.0.country' => 'required|string|max:255',
-        //     'cinemas.0.company' => 'string|max:255',
-        //     ]);
+        $cinema['image'] = $request->cinemas[0]['image'];
+
+        if ($request->hasFile('cinemas.0.image')) {
+            $image = $request->file('cinemas.0.image');
+            $path = $image->store('cinema_images', 'public'); // Save to storage/app/public/cinema_images
+            $cinema['image'] = $path;
+        }
         // Save the validated data to the database
         if (!empty($cinema)) {
             $insert = Cinemas::create($cinema);
@@ -104,4 +100,10 @@ class CinemaController extends Controller
             Placement::create($placement);
         }
     }
+
+    public function createCinemasAndPlacements(Request $request){
+        
+    }
+
+
 }
