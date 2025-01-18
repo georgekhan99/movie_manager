@@ -20,32 +20,6 @@ class CinemaController extends Controller
         ]);
     }
 
-    public function CreateCinemas()
-    {
-        $companyList = Company::all();
-        return Inertia::render('AdminDashboard/CinemaManager/CreateCinema', [
-            "companyList" => $companyList
-        ]);
-    }
-
-    public function getCinemaListPageload($id){
-        $cinema = DB::table('cinemas')
-        ->join('cinema_placements', 'cinemas.id', '=', 'cinema_placements.cinema_id')
-        ->where('cinemas.id', $id)
-        ->select('cinemas.*', 
-        'cinema_placements.placement_name as placement_name',
-        'cinema_placements.placement_width as placement_width',
-        'cinema_placements.placement_height as placement_height',
-        'cinema_placements.placement_colors as placement_colors',
-        'cinema_placements.placement_material as placement_material',
-        )
-        ->get();
-        return Inertia::render('AdminDashboard/CinemaManager/Cinema.PlacementList', [
-            "PageId" => $id,
-            "CinemaData" => $cinema
-        ]);
-    }
-
     function CreateCinemasWithId($id)
     {
         $companyList = Company::all();
@@ -58,9 +32,46 @@ class CinemaController extends Controller
         ]);
     }
 
+    public function CreateCinemas()
+    {
+        $companyList = Company::all();
+        return Inertia::render('AdminDashboard/CinemaManager/CreateCinema', [
+            "companyList" => $companyList
+        ]);
+    }
+
+    public function getPlacementByID($id)
+    {   
+        $placements = Placement::find($id);
+        return response()->json($placements);
+   
+    }
+
+    public function getCinemaListPageload($id){
+        $cinema = DB::table('cinemas')
+        ->join('cinema_placements', 'cinemas.id', '=', 'cinema_placements.cinema_id')
+        ->where('cinemas.id', $id)
+        ->select(
+        'cinema_placements.id as placement_ID',
+        'cinema_placements.placement_name as placement_name',
+        'cinema_placements.placement_width as placement_width',
+        'cinema_placements.placement_height as placement_height',
+        'cinema_placements.placement_colors as placement_colors',
+        'cinema_placements.placement_material as placement_material',
+        )
+        ->get();
+        $cinema_data = DB::table('cinemas')->where('id', $id)->first();
+        // dd($cinema);
+        return Inertia::render('AdminDashboard/CinemaManager/Cinema.PlacementList', [
+            "PageId" => $id,
+            "CinemaData" => $cinema,  
+            "cinema_data" => $cinema_data
+        ]);
+    }
+
     public function saveCinema(Request $request)
     {
-    
+        
         $request->validate([
             'cinema_name' => 'required|string',
             'address_1' => 'nullable|string',
@@ -87,7 +98,7 @@ class CinemaController extends Controller
         if ($request->has('placements')) {
             $placements = json_decode($request->placements, true);
         
-            foreach ($placements as $placementData) {
+            foreach ($placements as $index => $placementData) {
                 $placement = new Placement();
                 $placement->cinema_id = $insert->id; // Associate with the cinema
                 $placement->placement_name = $placementData['name'];
@@ -97,17 +108,50 @@ class CinemaController extends Controller
                 $placement->placement_colors = $placementData['colors'];
                 $placement->placement_material = $placementData['material'];
                 $placement->placement_price = $placementData['price'];
-        
-                // Handle image if provided
-                // if (isset($placementData['image'])) {
-                //     $placement->image = $placementData['image'];
-                // }
-        
+                $fileKey = "placement_image_{$index}";
+                if ($request->hasFile($fileKey)){
+                    $path = $request->file($fileKey)->store('placements_images', 'public');
+                    $placement->placement_image = $path;
+                }
                 $placement->save();
             }
+            
         }
+        
         return redirect('/dashboard/cinema/create/' . $insert->id)
         ->with('success', 'Cinema created successfully.');
+    }
+
+    public function updateCinema(Request $request){
+        $data = array();
+        $data['cinema_name'] = $request->cinema_name;
+        $data['address_1'] = $request->address_1;
+        $data['address_2'] = $request->address_2;
+        $data['zip'] = $request->zip;
+        $data['city'] = $request->city;
+        $data['state'] = $request->state;
+        $data['country'] = $request->country;
+        $data['company_id'] = $request->company_id;
+        if($request->hasfile('image')) {
+            $path = $request->file('image')->store('cinema_images', 'public');
+            $data['image'] = $path;
+        }
+        Cinemas::where('id', $request->id)->update($data);
+        return redirect('/dashboard/cinema/'.$request->id . '/view')
+        ->with('success', 'Cinema created successfully.');
+    }
+
+    public function updateplacement(Request $request){
+        $data = array();
+        $data['placement_name'] = $request->placement_name;
+        $data['placement_width'] = $request->placement_width;
+        $data['placement_height'] = $request->placement_height;
+        $data['placement_material'] = $request->placement_material;
+        $data['placement_price'] = $request->placement_price;
+        $data['placement_colors'] = $request->placement_colors;
+        $data['placement_description'] = $request->placement_description;
+        Placement::where('id', $request->placement_id)->update($data);
+        return redirect()->back()->with('success', 'Cinema created successfully.');
     }
 
 }

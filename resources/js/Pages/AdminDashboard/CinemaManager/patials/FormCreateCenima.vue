@@ -20,9 +20,8 @@ const previewImage = (event) => {
         };
         reader.readAsDataURL(file);
         cinemas.value[0].image = file;
-        
-        console.log(reader)
 
+        console.log(reader);
     }
 };
 
@@ -103,7 +102,6 @@ onMounted(() => {
 });
 
 const saveCinemas = async () => {
-
     const formData = new FormData();
     formData.append("cinema_name", cinemas.value[0].name);
     formData.append("address_1", cinemas.value[0].address_1);
@@ -113,38 +111,38 @@ const saveCinemas = async () => {
     formData.append("state", cinemas.value[0].state);
     formData.append("country", cinemas.value[0].country);
     formData.append("company_id", cinemas.value[0].company_id);
-
     if (cinemas.value[0].image instanceof File) {
         formData.append("image", cinemas.value[0].image);
     }
-
-    if(placements.value.length > 0){
-        formData.append('placements', JSON.stringify(placements.value.map((placements) => {
-            const { image, imagePreview, ...data } = placements;
-            return data;
-        })));
-
-        placements.value.forEach((placement, index) =>{
-            if(placement.image instanceof File){
-                formData.append(`placement_image_${index}`, placement.image)
-            }else{
+    if (placements.value.length > 0) {
+        formData.append(
+            "placements",
+            JSON.stringify(
+                placements.value.map((placements) => {
+                    const { image, imagePreview, ...data } = placements;
+                    return data;
+                })
+            )
+        );
+        placements.value.forEach((placement, index) => {
+            if (placement.image instanceof File) {
+                formData.append(`placement_image_${index}`, placement.image);
+            } else {
                 console.log("No Placements to save to the database");
             }
-        })
-
-        for(const[key, value] of formData.entries()){
+        });
+        for (const [key, value] of formData.entries()) {
             console.log(key, value);
         }
     }
-
     await router.post("/dashboard/addcinema", formData, {
         headers: {
             "Content-Type": "multipart/form-data",
         },
     });
+    
     showPlacement.value = true;
 };
-
 </script>
 
 <template>
@@ -648,7 +646,7 @@ const saveCinemas = async () => {
 
                         <!-- Add Placement Button -->
                         <button
-                            class="mt-2 mx-1 bg-blue-500 text-white p-2 rounded" 
+                            class="mt-2 mx-1 bg-blue-500 text-white p-2 rounded"
                             @click.prevent="addPlacement"
                         >
                             Add Placement
@@ -659,7 +657,7 @@ const saveCinemas = async () => {
                             class="mt-4 w-20 bg-green-500 text-white p-2 rounded"
                             @click.prevent="saveCinemas()"
                         >
-                            Save 
+                            Save
                         </button>
                     </div>
                 </div>

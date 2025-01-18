@@ -56,13 +56,14 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified',
     Route::get('/dashboard/cinema/create', [App\Http\Controllers\CinemaController::class, 'CreateCinemas'])->name('create.cinemas.noid');
     Route::get('/dashboard/cinema/create/{id}', [App\Http\Controllers\CinemaController::class, 'CreateCinemasWithId'])->name('adminpage.cinema.create.withid');
     Route::get('/dashboard/cinema/{id}/view', [App\Http\Controllers\CinemaController::class, 'getCinemaListPageload'])->name('adminpage.cinema.placements.list');
-
+    Route::get('/dashboard/placement/{id}', [App\Http\Controllers\CinemaController::class, 'getPlacementByID'])->name('adminpage.getplacement.id');
+    Route::post('/dashboard/cinema/update',[App\Http\Controllers\CinemaController::class, 'updateCinema'])->name('adminpage.cinema.updates.cinemas');
+    Route::post('/dashboard/placement/update',[App\Http\Controllers\CinemaController::class, 'updateplacement'])->name('adminpage.placement.updates');
+    
+    
     //All Cinema
     Route::get('/dashboard/cinema/', [App\Http\Controllers\CinemaController::class, 'getCinemaPageLoad'])->name('adminpage.cinema.AllCinemas');
     Route::post('/dashboard/addcinema', [App\Http\Controllers\CinemaController::class, 'saveCinema'])->name('admin.save_cinema');
-
-    //Placements
-    Route::post('/dashboard/save/placement', [App\Http\Controllers\CinemaController::class, 'savePlacement'])->name('cinemas.save.placements');
 
     //Distributor Manager
     Route::get('/distributor/add/movie', [App\Http\Controllers\DistributorController::class, 'getMoviePageLoad'])->name('distributor.add.movie');

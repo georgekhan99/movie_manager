@@ -18,5 +18,6 @@ class Placement extends Model
         'placement_colors',
         'placement_material',
         'placement_price',
+        'placement_image'
     ];
 }
