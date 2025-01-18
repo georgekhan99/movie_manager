@@ -17,6 +17,8 @@ class Cinemas extends Model
         'city',
         'state',
         'country',
-        'company_id'
+        'company_id',
+        'image',
+        'Difference_Address'
     ];
 }

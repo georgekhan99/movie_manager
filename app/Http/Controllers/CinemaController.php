@@ -60,50 +60,54 @@ class CinemaController extends Controller
 
     public function saveCinema(Request $request)
     {
-        $cinema = array();
-        $cinema['cinema_name'] = $request->cinemas[0]['name'];
-        $cinema['address_1'] = $request->cinemas[0]['address_1'];
-        $cinema['address_2'] = $request->cinemas[0]['address_2'];
-        $cinema['zip'] = $request->cinemas[0]['zip'];
-        $cinema['city'] = $request->cinemas[0]['city'];
-        $cinema['state'] = $request->cinemas[0]['state'];
-        $cinema['country'] = $request->cinemas[0]['country'];
-        $cinema['company_id'] = $request->cinemas[0]['company_id'];
-        $cinema['image'] = $request->cinemas[0]['image'];
+    
+        $request->validate([
+            'cinema_name' => 'required|string',
+            'address_1' => 'nullable|string',
+            'address_2' => 'nullable|string',
+            'zip' => 'nullable|string',
+            'city' => 'required|string',
+            'state' => 'nullable|string',
+            'country' => 'required|string',
+            'company_id' => 'nullable|integer',
+            'image' => 'nullable|file|image|max:2048', // Validate image
+        ]);
 
-        if ($request->hasFile('cinemas.0.image')) {
-            $image = $request->file('cinemas.0.image');
-            $path = $image->store('cinema_images', 'public'); // Save to storage/app/public/cinema_images
+        $cinema = $request->only([
+            'cinema_name', 'address_1', 'address_2', 'zip', 'city', 'state', 'country', 'company_id'
+        ]);
+
+        if($request->hasfile('image')) {
+            $path = $request->file('image')->store('cinema_images', 'public');
             $cinema['image'] = $path;
         }
-        // Save the validated data to the database
-        if (!empty($cinema)) {
-            $insert = Cinemas::create($cinema);
-            return redirect('/dashboard/cinema/create/' . $insert->id);
-        }
+    
+        $insert = Cinemas::create($cinema);
 
-        return response()->json('Nothing Data have yet');
-    }
-
-    public function savePlacement(Request $request)
-    {
-        if (!empty($request->placement[0]['cinema_id'])) {
-            $placement = array();
-            $placement['cinema_id']             = $request->placement[0]['cinema_id'];
-            $placement['placement_name']        = $request->placement[0]['name'];
-            $placement['placement_description'] = $request->placement[0]['description'];
-            $placement['placement_width']       = $request->placement[0]['width'];
-            $placement['placement_height']      = $request->placement[0]['height'];
-            $placement['placement_colors']      = $request->placement[0]['colors'];
-            $placement['placement_material']    = $request->placement[0]['material'];
-            $placement['placement_price']       = $request->placement[0]['price'];
-            Placement::create($placement);
-        }
-    }
-
-    public function createCinemasAndPlacements(Request $request){
+        if ($request->has('placements')) {
+            $placements = json_decode($request->placements, true);
         
+            foreach ($placements as $placementData) {
+                $placement = new Placement();
+                $placement->cinema_id = $insert->id; // Associate with the cinema
+                $placement->placement_name = $placementData['name'];
+                $placement->placement_description = $placementData['description'];
+                $placement->placement_height = $placementData['height'];
+                $placement->placement_width = $placementData['width'];
+                $placement->placement_colors = $placementData['colors'];
+                $placement->placement_material = $placementData['material'];
+                $placement->placement_price = $placementData['price'];
+        
+                // Handle image if provided
+                // if (isset($placementData['image'])) {
+                //     $placement->image = $placementData['image'];
+                // }
+        
+                $placement->save();
+            }
+        }
+        return redirect('/dashboard/cinema/create/' . $insert->id)
+        ->with('success', 'Cinema created successfully.');
     }
-
 
 }

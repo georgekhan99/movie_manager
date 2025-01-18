@@ -14,8 +14,15 @@ const previewImage = (event) => {
     const file = event.target.files[0];
     if (file) {
         imageFile.value = file;
-        imagePreview.value = URL.createObjectURL(file);
-        console.log(imagePreview.value);
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            imagePreview.value = e.target.result; // Generate base64 preview
+        };
+        reader.readAsDataURL(file);
+        cinemas.value[0].image = file;
+        
+        console.log(reader)
+
     }
 };
 
@@ -43,7 +50,7 @@ interface Cinemas {
     city: string;
     state: string;
     country: string;
-    company_id: number;
+    company_id: number | any;
     image: null;
 }
 const placements = ref<Placement[]>([]);
@@ -95,23 +102,49 @@ onMounted(() => {
     cinemaId.value = parseInt(urlParts[4]);
 });
 
-const saveCinemas = () => {
-    router.post("/dashboard/addcinema", {
-        cinemas: cinemas.value,
+const saveCinemas = async () => {
+
+    const formData = new FormData();
+    formData.append("cinema_name", cinemas.value[0].name);
+    formData.append("address_1", cinemas.value[0].address_1);
+    formData.append("address_2", cinemas.value[0].address_2);
+    formData.append("zip", cinemas.value[0].zip);
+    formData.append("city", cinemas.value[0].city);
+    formData.append("state", cinemas.value[0].state);
+    formData.append("country", cinemas.value[0].country);
+    formData.append("company_id", cinemas.value[0].company_id);
+
+    if (cinemas.value[0].image instanceof File) {
+        formData.append("image", cinemas.value[0].image);
+    }
+
+    if(placements.value.length > 0){
+        formData.append('placements', JSON.stringify(placements.value.map((placements) => {
+            const { image, imagePreview, ...data } = placements;
+            return data;
+        })));
+
+        placements.value.forEach((placement, index) =>{
+            if(placement.image instanceof File){
+                formData.append(`placement_image_${index}`, placement.image)
+            }else{
+                console.log("No Placements to save to the database");
+            }
+        })
+
+        for(const[key, value] of formData.entries()){
+            console.log(key, value);
+        }
+    }
+
+    await router.post("/dashboard/addcinema", formData, {
+        headers: {
+            "Content-Type": "multipart/form-data",
+        },
     });
     showPlacement.value = true;
 };
-///dashboard/save/placement
-const savePlacement = () => {
-    router.post("/dashboard/save/placement", {
-        placement: placements.value,
-    });
-};
 
-const ChecksavedData = () => {
-    let saved = router.page.url.split("/")[4];
-    return saved == null || saved == "" ? true : false;
-};
 </script>
 
 <template>
@@ -237,8 +270,7 @@ const ChecksavedData = () => {
                             Company
                         </label>
                         <select
-                            v-model="cinemas
-                            .company_id"
+                            v-model="cinemas[0].company_id"
                             class="input-style"
                         >
                             <option
@@ -405,12 +437,12 @@ const ChecksavedData = () => {
                     </div>
                 </div>
                 <!-- submit Cinema -->
-                <button
+                <!-- <button
                     class="mt-2 bg-blue-500 text-white p-2 rounded text-white p-2 rounded"
                     @click.prevent="saveCinemas"
                 >
                     Submit
-                </button>
+                </button> -->
                 <!-- Add Difference Address -->
 
                 <!-- submit Cinema -->
@@ -572,37 +604,39 @@ const ChecksavedData = () => {
                                     />
                                 </div>
                             </div>
-                            <div class="mb-4.5 flex flex-col gap-6 xl:flex-row w-full">
-                            <div class="xl:w-1/2">
-                                <label
-                                    class="mb-3 block text-sm font-medium text-black dark:text-white"
-                                    >Upload Image</label
-                                >
-                                <input
-                                    @change="
-                                        (event) =>
-                                            previewPlacement(event, index)
-                                    "
-                                    type="file"
-                                    class="input-style"
-                                />
-                            </div>
-                            <div class="w-full xl:w-1/2">
-                                <!-- Show Image Preview for the Current Placement -->
-                                <div v-if="placement.imagePreview">
-                                    <h3>Image Preview</h3>
-                                    <div
-                                        class="w-[250px] h-[250px] mt-2 rounded-md"
+                            <div
+                                class="mb-4.5 flex flex-col gap-6 xl:flex-row w-full"
+                            >
+                                <div class="xl:w-1/2">
+                                    <label
+                                        class="mb-3 block text-sm font-medium text-black dark:text-white"
+                                        >Upload Image</label
                                     >
-                                        <img
-                                            :src="placement.imagePreview"
-                                            class="object-cover w-[250px] h-[250px] rounded-md"
-                                            alt="Placement Image Preview"
-                                        />
+                                    <input
+                                        @change="
+                                            (event) =>
+                                                previewPlacement(event, index)
+                                        "
+                                        type="file"
+                                        class="input-style"
+                                    />
+                                </div>
+                                <div class="w-full xl:w-1/2">
+                                    <!-- Show Image Preview for the Current Placement -->
+                                    <div v-if="placement.imagePreview">
+                                        <h3>Image Preview</h3>
+                                        <div
+                                            class="w-[250px] h-[250px] mt-2 rounded-md"
+                                        >
+                                            <img
+                                                :src="placement.imagePreview"
+                                                class="object-cover w-[250px] h-[250px] rounded-md"
+                                                alt="Placement Image Preview"
+                                            />
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
                             <!-- Remove Placement Button -->
                             <button
                                 class="mt-2 bg-red-500 text-white p-2 rounded"
@@ -614,7 +648,7 @@ const ChecksavedData = () => {
 
                         <!-- Add Placement Button -->
                         <button
-                            class="mt-2 mx-1 bg-blue-500 text-white p-2 rounded"
+                            class="mt-2 mx-1 bg-blue-500 text-white p-2 rounded" 
                             @click.prevent="addPlacement"
                         >
                             Add Placement
@@ -622,10 +656,10 @@ const ChecksavedData = () => {
 
                         <!-- Submit Button -->
                         <button
-                            class="mt-4 bg-green-500 text-white p-2 rounded"
-                            @click.prevent="savePlacement"
+                            class="mt-4 w-20 bg-green-500 text-white p-2 rounded"
+                            @click.prevent="saveCinemas()"
                         >
-                            Save Placements
+                            Save 
                         </button>
                     </div>
                 </div>
