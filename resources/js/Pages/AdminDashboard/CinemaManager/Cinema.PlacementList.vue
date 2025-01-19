@@ -31,7 +31,7 @@ interface Cinemas {
     city: string;
     state: string;
     country: string;
-    company_id: number | null;
+    company_id: number | null | any;
     image: string | null;
 }
 const props = defineProps<{
@@ -76,7 +76,7 @@ const closeModal = () => {
     isModalOpen.value = false;
     PlacementsDetials.value = [];
 };
-//End Modal 
+//End Modal
 const PlacementsDetials = ref([]);
 //Open Modal
 const OpenModal = async (id) => {
@@ -104,45 +104,128 @@ const updateCinemasData = async () => {
     if (cinemas.value.image instanceof File) {
         formData.append("image", cinemas.value.image);
     }
-
-    try{
-      await router.post("/dashboard/cinema/update", formData, {
-        headers: {
-            "Content-Type": "multipart/form-data",
-        },
-    });
-    }catch (error) {
+    try {
+        await router.post("/dashboard/cinema/update", formData, {
+            headers: {
+                "Content-Type": "multipart/form-data",
+            },
+        });
+    } catch (error) {
         console.error("Error updating cinema data:", error);
     }
 };
-//Update Placement To api
+//Placement Function
 const updatePlacementDetails = async () => {
     let formData = new FormData();
     formData.append("placement_id", PlacementsDetials.value.id);
     formData.append("placement_name", PlacementsDetials.value.placement_name);
     formData.append("placement_width", PlacementsDetials.value.placement_width);
-    formData.append("placement_height", PlacementsDetials.value.placement_height);
-    formData.append("placement_material", PlacementsDetials.value.placement_material);
+    formData.append(
+        "placement_height",
+        PlacementsDetials.value.placement_height
+    );
+    formData.append(
+        "placement_material",
+        PlacementsDetials.value.placement_material
+    );
     formData.append("placement_price", PlacementsDetials.value.placement_price);
-    formData.append("placement_colors", PlacementsDetials.value.placement_colors);
-    formData.append("placement_description", PlacementsDetials.value.placement_description);
-    formData.append("placement_colors", PlacementsDetials.value.placement_colors);
-    try{
-      await router.post("/dashboard/placement/update", formData, {
-        headers: {
-            "Content-Type": "multipart/form-data",
-        },
-    });
-    closeModal();
-    }catch (error) {
-      console.error(error)
+    formData.append(
+        "placement_colors",
+        PlacementsDetials.value.placement_colors
+    );
+    formData.append(
+        "placement_description",
+        PlacementsDetials.value.placement_description
+    );
+    formData.append(
+        "placement_colors",
+        PlacementsDetials.value.placement_colors
+    );
+    if (Placementsimage.value instanceof File) {
+        formData.append("placement_image", Placementsimage.value);
+        
+    }
+    try {
+        await router.post("/dashboard/placement/update", formData, {
+            headers: {
+                "Content-Type": "multipart/form-data",
+            },
+        });
+        closeModal();
+        PlacementimagePreview.value = null
+    } catch (error) {
+        console.error(error);
     }
 };
-
+const isShowDeletePlacement = ref(false);
+const ShowDeletePlacement = (id) => {
+    isShowDeletePlacement.value = true;
+    DeleteConfirmationId.value = id;
+};
+const DeleteConfirmationId = ref(null);
+const closeDeletePlacementModal = () => {
+    isShowDeletePlacement.value = false;
+};
+const DeletePlacement = async () => {
+    let formData = new FormData();
+    formData.append("id", DeleteConfirmationId.value);
+    try {
+        await router.post("/dashboard/placement/delete", formData, {
+            headers: {
+                "Content-Type": "multipart/form-data",
+            },
+        });
+        DeleteConfirmationId.value = null;
+        closeDeletePlacementModal();
+    } catch (error) {
+        console.log(error);
+    }
+};
+const Placementsimage = ref<File | null>(null);
+const PlacementimagePreview = ref<string | null>(null);
+const previewPlacementImage = (event: Event) => {
+    const file = (event.target as HTMLInputElement).files?.[0];
+    if (file) {
+        Placementsimage.value = file;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            PlacementimagePreview.value = e.target?.result as string; // Generate base64 preview
+        };
+        reader.readAsDataURL(file); // Read the file as a data URL
+    }
+    console.log(Placementsimage.value);
+};
 </script>
 
 <template>
     <DefaultLayout title="Placement List">
+        <!-- Delete Placement Confirmation -->
+        <DialogModal :show="isShowDeletePlacement">
+            <template #title>
+                <h2>DeletePlacement</h2>
+            </template>
+            <template #content>
+                <p class="text-xl text-red">
+                    Are you sure to Delete This Placement
+                </p>
+            </template>
+            <template #footer>
+                <button
+                    @click="DeletePlacement"
+                    class="w-20 h-10 bg-red-500 rounded-md text-white hover:bg-red-400 mx-3"
+                >
+                    Confirm
+                </button>
+                <button
+                    @click="closeDeletePlacementModal"
+                    class="w-20 h-10 bg-blue-500 rounded-md text-white hover:bg-blue-400"
+                >
+                    Close
+                </button>
+            </template>
+        </DialogModal>
+        <!-- End Delete Placement Confirmation -->
+        <!-- Edit Placement Modal -->
         <DialogModal :show="isModalOpen">
             <template #title>
                 <div class="flex">
@@ -284,10 +367,21 @@ const updatePlacementDetails = async () => {
                             class="mb-3 block text-sm font-medium text-black dark:text-white"
                             >Upload Image</label
                         >
-                        <input type="file" class="input-style" />
+                        <input
+                            type="file"
+                            @change="previewPlacementImage"
+                            class="input-style"
+                        />
                     </div>
                     <div class="w-1/2">
-                      <img :src="`/storage/${PlacementsDetials.placement_image}`" alt="">
+                        <img
+                            :src="
+                                PlacementimagePreview ||
+                                `/storage/${PlacementsDetials.placement_image}`
+                            "
+                            alt="Placement Image"
+                            class="object-cover w-full h-40 rounded-md"
+                        />
                     </div>
                 </div>
             </template>
@@ -307,6 +401,35 @@ const updatePlacementDetails = async () => {
                 </button>
             </template>
         </DialogModal>
+        <!-- End Edit Placement Modal -->
+
+         <!-- Add More Placement -->
+        <DialogModal>
+            <template #title>
+                <h2>DeletePlacement</h2>
+            </template>
+            <template #content>
+                <p class="text-xl text-red">
+                    Are you sure to Delete This Placement
+                </p>
+            </template>
+            <template #footer>
+                <button
+                    @click="DeletePlacement"
+                    class="w-20 h-10 bg-red-500 rounded-md text-white hover:bg-red-400 mx-3"
+                >
+                    Confirm
+                </button>
+                <button
+                    @click="closeDeletePlacementModal"
+                    class="w-20 h-10 bg-blue-500 rounded-md text-white hover:bg-blue-400"
+                >
+                    Close
+                </button>
+            </template>
+        </DialogModal>
+        <!-- End Add More Placement -->
+
 
         <!-- Cinema Data -->
         <div
@@ -537,6 +660,7 @@ const updatePlacementDetails = async () => {
                         Edit
                     </p>
                     <p
+                        @click="ShowDeletePlacement(c.placement_ID)"
                         class="text-sm font-medium text-black bg-red-300 w-15 text-center rounded-full"
                     >
                         Delete
