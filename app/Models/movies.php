@@ -10,6 +10,7 @@ class movies extends Model
     use HasFactory;
     protected $table = 'movies';
     protected $fillable = [
+        'id',
         'movies_name',
         'movies_release_date',
         'company_id'

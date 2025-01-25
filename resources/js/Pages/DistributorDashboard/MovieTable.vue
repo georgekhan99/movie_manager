@@ -1,21 +1,124 @@
 <script setup lang="ts">
+import { ref } from "vue";
 import DefaultLayout from "../../Layouts/DefaultLayout.vue";
-import { Link } from "@inertiajs/vue3";
-import Dayjs from "dayjs";
+import { router } from "@inertiajs/vue3";
 import DialogModal from "@/Components/DialogModal.vue";
 defineProps({
     movie_list: Object,
+    company_list: Object,
 });
-</script>
 
+interface EditMovie {
+    id?: number;
+    movies_name: string;
+    movies_release_date: string;
+    company_id: number;
+}
+const isEditModalOpen = ref(false);
+const EditMovieData = ref<EditMovie[]>([]);
+const HandlerEditModal = (id: number, paylod: EditMovie[]) => {
+    isEditModalOpen.value = true;
+    EditMovieData.value = paylod;
+    console.log(id, "Data:", EditMovieData.value);
+};
+const HandlerCloseModal = () => {
+    isEditModalOpen.value = false;
+};
+const HandlerSaveMovie = async () => {
+    try {
+        let formData = new FormData();
+        formData.append("id", EditMovieData.value.id);
+        formData.append("movies_name", EditMovieData.value.movies_name);
+        formData.append(
+            "movies_release_date",
+            EditMovieData.value.movies_release_date
+        );
+        formData.append("company_id", EditMovieData.value.company_id);
+        await router.post("/distributor/edit/movie", formData);
+        await HandlerCloseModal();
+    } catch (error) {
+        console.log("error:", error);
+    }
+};
+
+const HandleDeleteMovie = async (id) => {
+    try {
+        await router.get("/distributor/delete/movie/" + id);
+    } catch (error) {
+        console.log(error);
+    }
+};
+</script>
 <template>
-    <DialogModal :show="true">
+    <DialogModal :show="isEditModalOpen">
         <template #title>
-            <h2>DeletePlacement</h2>
+            <h2>Edit Movie</h2>
         </template>
-        <template #content> sdasd </template>
-        <template #footer> asdas </template>
+        <template #content>
+            <div class="w-full">
+                <div class="flex flex-col">
+                    <div class="w-full mx-1 my-2">
+                        <label for="Movie Name" class="text-black font-bold"
+                            >Movie Name</label
+                        >
+                        <input
+                            type="text"
+                            id="Movie Name"
+                            v-model="EditMovieData.movies_name"
+                            class="input-style"
+                        />
+                    </div>
+                    <div class="w-full mx-1 my-2">
+                        <label for="moviecompany" class="text-black font-bold"
+                            >Company</label
+                        >
+                        <select
+                            name="MovieCompany"
+                            id="moviecompany"
+                            class="input-style"
+                            v-model="EditMovieData.company_id"
+                        >
+                            <option value="">Select Company</option>
+                            <option
+                                v-for="company in company_list"
+                                :value="company.id"
+                            >
+                                {{ company.company_legalname }}
+                            </option>
+                        </select>
+                    </div>
+                    <div class="w-full mx-1 my-2">
+                        <label for="Movie Name" class="text-black font-bold"
+                            >Release Date</label
+                        >
+                        <input
+                            type="date"
+                            id="Movie Name"
+                            class="input-style"
+                            v-model="EditMovieData.movies_release_date"
+                        />
+                    </div>
+                </div>
+            </div>
+        </template>
+        <template #footer>
+            <div class="w-full flex justify-end">
+                <button
+                    @click="HandlerSaveMovie"
+                    class="w-10 bg-blue-500 text-white h-10 w-20 rounded-md"
+                >
+                    Update
+                </button>
+                <button
+                    @click="HandlerCloseModal"
+                    class="w-10 mx-3 bg-yellow-500 text-white h-10 w-20 rounded-md"
+                >
+                    Close
+                </button>
+            </div>
+        </template>
     </DialogModal>
+
     <DefaultLayout title="UserList">
         <!-- Filter and Sort Header -->
         <div
@@ -75,7 +178,8 @@ defineProps({
 
             <!-- Table Rows -->
             <div
-                v-for="movie in movie_list"
+                v-for="(movie, index) in movie_list"
+                :key="movie.id"
                 class="grid grid-cols-6 border-t border-stroke py-4.5 px-4 dark:border-strokedark sm:grid-cols-8 md:px-6 2xl:px-7.5"
             >
                 <div class="col-span-3 flex items-center">
@@ -94,10 +198,12 @@ defineProps({
                         {{ movie.movies_release_date }}
                     </p>
                 </div>
-                <div class="col-span-1 flex items-center justify-center">
+                <div
+                    class="col-span-1  flex items-center justify-center cursor-pointer"
+                >
                     <a
                         class="hover:text-primary relative group"
-                        href="/distributor/movie/1/edit"
+                        @click="HandlerEditModal(movie.id, movie)"
                     >
                         <svg
                             width="18"
@@ -117,7 +223,40 @@ defineProps({
                         <span
                             class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 hidden w-max px-2 py-1 text-xs text-white bg-black rounded opacity-0 group-hover:opacity-100 group-hover:block transition-opacity duration-900"
                         >
-                            Edit User
+                            Edit Movie
+                        </span>
+                    </a>
+                    <a
+                        class="hover:text-primary relative group mx-5"
+                        @click="HandleDeleteMovie(movie.id)"
+                    >
+                        <svg
+                            width="18"
+                            height="18"
+                            viewBox="0 0 24 24"
+                            fill="#343C54"
+                            xmlns="http://www.w3.org/2000/svg"
+                            transform="rotate(0 0 0)"
+                        >
+                            <path
+                                d="M14.7223 12.7585C14.7426 12.3448 14.4237 11.9929 14.01 11.9726C13.5963 11.9522 13.2444 12.2711 13.2241 12.6848L12.9999 17.2415C12.9796 17.6552 13.2985 18.0071 13.7122 18.0274C14.1259 18.0478 14.4778 17.7289 14.4981 17.3152L14.7223 12.7585Z"
+                                fill="#343C54"
+                            ></path>
+                            <path
+                                d="M9.98802 11.9726C9.5743 11.9929 9.25542 12.3448 9.27577 12.7585L9.49993 17.3152C9.52028 17.7289 9.87216 18.0478 10.2859 18.0274C10.6996 18.0071 11.0185 17.6552 10.9981 17.2415L10.774 12.6848C10.7536 12.2711 10.4017 11.9522 9.98802 11.9726Z"
+                                fill="#343C54"
+                            ></path>
+                            <path
+                                fill-rule="evenodd"
+                                clip-rule="evenodd"
+                                d="M10.249 2C9.00638 2 7.99902 3.00736 7.99902 4.25V5H5.5C4.25736 5 3.25 6.00736 3.25 7.25C3.25 8.28958 3.95503 9.16449 4.91303 9.42267L5.54076 19.8848C5.61205 21.0729 6.59642 22 7.78672 22H16.2113C17.4016 22 18.386 21.0729 18.4573 19.8848L19.085 9.42267C20.043 9.16449 20.748 8.28958 20.748 7.25C20.748 6.00736 19.7407 5 18.498 5H15.999V4.25C15.999 3.00736 14.9917 2 13.749 2H10.249ZM14.499 5V4.25C14.499 3.83579 14.1632 3.5 13.749 3.5H10.249C9.83481 3.5 9.49902 3.83579 9.49902 4.25V5H14.499ZM5.5 6.5C5.08579 6.5 4.75 6.83579 4.75 7.25C4.75 7.66421 5.08579 8 5.5 8H18.498C18.9123 8 19.248 7.66421 19.248 7.25C19.248 6.83579 18.9123 6.5 18.498 6.5H5.5ZM6.42037 9.5H17.5777L16.96 19.7949C16.9362 20.191 16.6081 20.5 16.2113 20.5H7.78672C7.38995 20.5 7.06183 20.191 7.03807 19.7949L6.42037 9.5Z"
+                                fill="#343C54"
+                            ></path>
+                        </svg>
+                        <span
+                            class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 hidden w-max px-2 py-1 text-xs text-white bg-black rounded opacity-0 group-hover:opacity-100 group-hover:block transition-opacity duration-900"
+                        >
+                            Delete Movie
                         </span>
                     </a>
                     <!-- Confirmation Modal -->

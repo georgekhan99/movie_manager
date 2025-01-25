@@ -55,10 +55,8 @@ const menuGroups = ref([
         children: [
         { label: 'Add Movie', route: 'distributor.add.movie' },
         { label: 'Movie Manager', route: 'distributor.movie.all' },
-        { label: 'Duration', route: 'distributor.movie.all' }
        ]
       },
-     
     ]
   }
 ])
