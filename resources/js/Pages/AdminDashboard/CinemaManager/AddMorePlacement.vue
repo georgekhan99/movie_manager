@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import DefaultLayout from "../../../Layouts/DefaultLayout.vue";
 import { ref, defineProps } from "vue";
+
+
 </script>
 
 <template>

@@ -11,6 +11,7 @@ class movies extends Model
     protected $table = 'movies';
     protected $fillable = [
         'movies_name',
-        'movies_premiere_date'
+        'movies_release_date',
+        'company_id'
     ];
 }

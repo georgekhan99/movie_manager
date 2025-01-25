@@ -1,9 +1,21 @@
 <script setup lang="ts">
-import DefaultLayout from '../../Layouts/DefaultLayout.vue';
-import { Link } from "@inertiajs/vue3"
+import DefaultLayout from "../../Layouts/DefaultLayout.vue";
+import { Link } from "@inertiajs/vue3";
+import Dayjs from "dayjs";
+import DialogModal from "@/Components/DialogModal.vue";
+defineProps({
+    movie_list: Object,
+});
 </script>
 
 <template>
+    <DialogModal :show="true">
+        <template #title>
+            <h2>DeletePlacement</h2>
+        </template>
+        <template #content> sdasd </template>
+        <template #footer> asdas </template>
+    </DialogModal>
     <DefaultLayout title="UserList">
         <!-- Filter and Sort Header -->
         <div
@@ -20,9 +32,7 @@ import { Link } from "@inertiajs/vue3"
 
             <!-- Sort Dropdown -->
             <div class="col-span-3 px-4">
-                <select
-                    class="input-style"
-                >
+                <select class="input-style">
                     <option value="users.name">Sort by Name</option>
                     <option value="user_roles.name">Sort by Role</option>
                     <option value="company.company_legalname">
@@ -31,9 +41,7 @@ import { Link } from "@inertiajs/vue3"
                 </select>
             </div>
             <div class="col-span-2 h-10 px-2">
-                <select
-                    class="input-style"
-                >
+                <select class="input-style">
                     <option value="asc">Ascending</option>
                     <option value="desc">Descending</option>
                 </select>
@@ -46,7 +54,7 @@ import { Link } from "@inertiajs/vue3"
         >
             <div class="py-6 px-4 md:px-6 xl:px-7.5">
                 <h4 class="text-xl font-bold text-black dark:text-white">
-                    User Management
+                    Movie Management
                 </h4>
             </div>
 
@@ -58,15 +66,16 @@ import { Link } from "@inertiajs/vue3"
                     <p class="font-medium">Movie Name</p>
                 </div>
                 <div class="col-span-2 hidden items-center sm:flex">
-                    <p class="font-medium">Premiere date</p>
+                    <p class="font-medium">Release date</p>
                 </div>
                 <div class="col-span-1 flex justify-center items-center">
                     <p class="font-medium">Action</p>
-                </div>     
+                </div>
             </div>
 
             <!-- Table Rows -->
             <div
+                v-for="movie in movie_list"
                 class="grid grid-cols-6 border-t border-stroke py-4.5 px-4 dark:border-strokedark sm:grid-cols-8 md:px-6 2xl:px-7.5"
             >
                 <div class="col-span-3 flex items-center">
@@ -76,13 +85,13 @@ import { Link } from "@inertiajs/vue3"
                         <p
                             class="text-sm font-medium text-black dark:text-white"
                         >
-                          MineCraft
+                            {{ movie.movies_name }}
                         </p>
                     </div>
                 </div>
                 <div class="col-span-2 hidden items-center sm:flex">
                     <p class="text-sm font-medium text-black dark:text-white">
-                     1/1/2025
+                        {{ movie.movies_release_date }}
                     </p>
                 </div>
                 <div class="col-span-1 flex items-center justify-center">
@@ -113,9 +122,7 @@ import { Link } from "@inertiajs/vue3"
                     </a>
                     <!-- Confirmation Modal -->
                 </div>
-                
             </div>
-            
         </div>
     </DefaultLayout>
 </template>
