@@ -44,6 +44,7 @@ class CinemaController extends Controller
     public function getPlacementByID($id)
     {
         $placements = Placement::find($id);
+        dd($placements);
         return response()->json($placements);
     }
 
@@ -62,11 +63,15 @@ class CinemaController extends Controller
             )
             ->get();
         $cinema_data = DB::table('cinemas')->where('id', $id)->first();
-        // dd($cinema);
+        if (isset($cinema_data->Difference_Address)) {
+            $cinema_data->Difference_Address = json_decode($cinema_data->Difference_Address, true);
+        } else {
+            $cinema_data->Difference_Address = []; // Default to an empty array
+        }
         return Inertia::render('AdminDashboard/CinemaManager/Cinema.PlacementList', [
             "PageId" => $id,
             "CinemaData" => $cinema,
-            "cinema_data" => $cinema_data
+            "cinema_data" => $cinema_data,            
         ]);
     }
 
@@ -81,7 +86,8 @@ class CinemaController extends Controller
             'state' => 'nullable|string',
             'country' => 'required|string',
             'company_id' => 'nullable|integer',
-            'image' => 'nullable|file|image|max:2048', // Validate image
+            'image' => 'nullable|file|image|max:2048', // Validate image.
+            'difference_addresses' => 'nullable|json', // Ensure valid JSON
         ]);
         $cinema = $request->only([
             'cinema_name',
@@ -91,12 +97,18 @@ class CinemaController extends Controller
             'city',
             'state',
             'country',
-            'company_id'
+            'company_id',
+            'Difference_Address'
         ]);
         if ($request->hasfile('image')) {
             $path = $request->file('image')->store('cinema_images', 'public');
             $cinema['image'] = $path;
         }
+
+        if ($request->has('difference_addresses')) {
+            $cinema['Difference_Address'] = json_encode($request->difference_addresses);
+        }
+
         $insert = Cinemas::create($cinema);
         if ($request->has('placements')) {
             $placements = json_decode($request->placements, true);
@@ -177,6 +189,10 @@ class CinemaController extends Controller
         } catch (\Exception $e) {
             return redirect()->back()->with('error', 'Failed to update placement: ' . $e->getMessage());
         }
+    }
+
+    public function getPageAddMorePlacement($id){
+        return Inertia::render('AdminDashboard/CinemaManager/AddMorePlacement', ['placement_id' => $id]);
     }
 
     public function deletePlacement(Request $request)

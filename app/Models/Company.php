@@ -21,7 +21,8 @@ class Company extends Model
         'company_zip_code',
         'company_city',
         'company_state',
-        'company_Country'
+        'company_Country',
+        'company_difference_address'
 
     ];
 }

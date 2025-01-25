@@ -52,6 +52,14 @@ interface Cinemas {
     company_id: number | any;
     image: null;
 }
+interface DifferenceCinemas {
+    address_1: string;
+    address_2: string;
+    zip: string;
+    city: string;
+    state: string;
+    country: string;
+}
 const placements = ref<Placement[]>([]);
 
 const cinemas = ref<Cinemas[]>([
@@ -68,6 +76,16 @@ const cinemas = ref<Cinemas[]>([
     },
 ]);
 const showPlacement = ref(true);
+const DifferenceAddress = ref<DifferenceCinemas[]>([
+    {
+        address_1: "",
+        address_2: "",
+        zip: "",
+        city: "",
+        state: "",
+        country: "",
+    },
+]);
 
 const addPlacement = () => {
     placements.value.push({
@@ -114,6 +132,13 @@ const saveCinemas = async () => {
     if (cinemas.value[0].image instanceof File) {
         formData.append("image", cinemas.value[0].image);
     }
+    //Validate Difference Address 
+    const validAddresses = DifferenceAddress.value.filter(address => 
+        address.address_1 || address.address_2 || address.zip || address.city || address.state || address.country
+    );
+    if(validAddresses.length > 0){
+        formData.append("difference_addresses", JSON.stringify(validAddresses));
+    }
     if (placements.value.length > 0) {
         formData.append(
             "placements",
@@ -131,16 +156,15 @@ const saveCinemas = async () => {
                 console.log("No Placements to save to the database");
             }
         });
-        for (const [key, value] of formData.entries()) {
+    }
+    for (const [key, value] of formData.entries()) {
             console.log(key, value);
         }
-    }
     await router.post("/dashboard/addcinema", formData, {
         headers: {
             "Content-Type": "multipart/form-data",
         },
     });
-    
     showPlacement.value = true;
 };
 </script>
@@ -344,6 +368,7 @@ const saveCinemas = async () => {
                             <p>Difference Delivery Address</p>
                         </label>
                     </div>
+                    <!-- Start Difference Address -->
                     <div v-show="AdddifferenceAddress">
                         <div class="mb-4.5 flex flex-col gap-6 xl:flex-row">
                             <div class="w-full xl:w-1/1">
@@ -353,7 +378,7 @@ const saveCinemas = async () => {
                                     Address 1
                                 </label>
                                 <input
-                                    v-model="cinemas[0].address_1"
+                                    v-model="DifferenceAddress[0].address_1"
                                     type="text"
                                     class="input-style"
                                 />
@@ -368,7 +393,7 @@ const saveCinemas = async () => {
                                     Address 2
                                 </label>
                                 <input
-                                    v-model="cinemas[0].address_2"
+                                    v-model="DifferenceAddress[0].address_2"
                                     type="text"
                                     class="input-style"
                                 />
@@ -385,7 +410,7 @@ const saveCinemas = async () => {
                                     Zip
                                 </label>
                                 <input
-                                    v-model="cinemas[0].zip"
+                                    v-model="DifferenceAddress[0].zip"
                                     type="text"
                                     class="input-style"
                                 />
@@ -397,14 +422,15 @@ const saveCinemas = async () => {
                                     City
                                 </label>
                                 <input
-                                    v-model="cinemas[0].city"
+                                    v-model="DifferenceAddress[0].city"
                                     type="text"
                                     class="input-style"
                                 />
                             </div>
                         </div>
                         <!-- End Zip/City -->
-                        <!-- Regioin / Country -->
+
+                        <!-- Region / Country -->
                         <div class="mb-4.5 flex flex-col gap-6 xl:flex-row">
                             <div class="w-full xl:w-1/2">
                                 <label
@@ -413,7 +439,7 @@ const saveCinemas = async () => {
                                     Region/State
                                 </label>
                                 <input
-                                    v-model="cinemas[0].state"
+                                    v-model="DifferenceAddress[0].state"
                                     type="text"
                                     class="input-style"
                                 />
@@ -425,25 +451,16 @@ const saveCinemas = async () => {
                                     Country
                                 </label>
                                 <input
-                                    v-model="cinemas[0].country"
+                                    v-model="DifferenceAddress[0].country"
                                     type="text"
                                     class="input-style"
                                 />
                             </div>
                         </div>
-                        <!-- End Regioin / Country -->
+                        <!-- End Region / Country -->
                     </div>
+                    <!-- End Difference Address -->
                 </div>
-                <!-- submit Cinema -->
-                <!-- <button
-                    class="mt-2 bg-blue-500 text-white p-2 rounded text-white p-2 rounded"
-                    @click.prevent="saveCinemas"
-                >
-                    Submit
-                </button> -->
-                <!-- Add Difference Address -->
-
-                <!-- submit Cinema -->
                 <div
                     v-if="showPlacement"
                     class="mb-4.5 flex flex-col gap-6 xl:flex-row"

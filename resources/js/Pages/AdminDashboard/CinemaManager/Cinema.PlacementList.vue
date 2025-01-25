@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { defineProps, ref } from "vue";
+import { defineProps, ref, computed } from "vue";
 import DefaultLayout from "../../../Layouts/DefaultLayout.vue";
 import { router } from "@inertiajs/vue3";
 import DialogModal from "@/Components/DialogModal.vue";
@@ -33,12 +33,85 @@ interface Cinemas {
     country: string;
     company_id: number | null | any;
     image: string | null;
+    Difference_Address?: string | null;
 }
+
+interface DifferenceCinemas {
+    address_1: string;
+    address_2: string;
+    zip: string;
+    city: string;
+    state: string;
+    country: string;
+}
+
 const props = defineProps<{
     pageId: number;
     CinemaData: CinemaPlacement[];
-    cinema_data: Cinemas;
+    cinema_data: {
+        Difference_Address: string | object | null;
+    };
 }>();
+
+
+function parseDifferenceAddress(
+    data: string | object | null
+): DifferenceCinemas {
+    if (!data) {
+        // Return default empty address if data is null
+        return {
+            address_1: "",
+            address_2: "",
+            zip: "",
+            city: "",
+            state: "",
+            country: "",
+        };
+    }
+    if (typeof data === "string") {
+        try {
+            const parsed = JSON.parse(data);
+            return Array.isArray(parsed) && parsed.length > 0 ? parsed[0] : {};
+        } catch (error) {
+            console.error("Invalid JSON format:", error);
+            return {
+                address_1: "",
+                address_2: "",
+                zip: "",
+                city: "",
+                state: "",
+                country: "",
+            };
+        }
+    }
+    if (typeof data === "object" && !Array.isArray(data)) {
+        // If already an object, return it as is
+        return data as DifferenceCinemas;
+    }
+    // Return default empty address if not valid
+    return {
+        address_1: "",
+        address_2: "",
+        zip: "",
+        city: "",
+        state: "",
+        country: "",
+    };
+}
+
+// Safely initialize the address
+const DiffenceAddress = ref<DifferenceCinemas>(
+    parseDifferenceAddress(props.cinema_data?.Difference_Address)
+);
+
+const isDifferenceEmpty = ():boolean => {
+    if(props.cinema_data?.Difference_Address.length > 0){
+        return true
+    }else {
+        return false
+    }
+}
+
 const isOpen = ref(false);
 const image = ref(null);
 const PreviewImage = ref(null);
@@ -55,6 +128,7 @@ const previewImage = (event) => {
     }
     console.log(image);
 };
+
 const cinemas = ref<Cinemas>({
     id: props.cinema_data.id,
     cinema_name: props.cinema_data.cinema_name,
@@ -90,6 +164,7 @@ const OpenModal = async (id) => {
         throw error;
     }
 };
+
 const updateCinemasData = async () => {
     const formData = new FormData();
     formData.append("id", cinemas.value.id);
@@ -143,7 +218,6 @@ const updatePlacementDetails = async () => {
     );
     if (Placementsimage.value instanceof File) {
         formData.append("placement_image", Placementsimage.value);
-        
     }
     try {
         await router.post("/dashboard/placement/update", formData, {
@@ -152,7 +226,7 @@ const updatePlacementDetails = async () => {
             },
         });
         closeModal();
-        PlacementimagePreview.value = null
+        PlacementimagePreview.value = null;
     } catch (error) {
         console.error(error);
     }
@@ -181,6 +255,12 @@ const DeletePlacement = async () => {
         console.log(error);
     }
 };
+
+const isDifferenceAddressShow = ref(false);
+const ToggleDifferenceAddress = () => {
+  isDifferenceAddressShow.value = !isDifferenceAddressShow.value; 
+}
+
 const Placementsimage = ref<File | null>(null);
 const PlacementimagePreview = ref<string | null>(null);
 const previewPlacementImage = (event: Event) => {
@@ -189,7 +269,7 @@ const previewPlacementImage = (event: Event) => {
         Placementsimage.value = file;
         const reader = new FileReader();
         reader.onload = (e) => {
-            PlacementimagePreview.value = e.target?.result as string; // Generate base64 preview
+            PlacementimagePreview.value = e.target?.result // Generate base64 preview
         };
         reader.readAsDataURL(file); // Read the file as a data URL
     }
@@ -376,8 +456,9 @@ const previewPlacementImage = (event: Event) => {
                     <div class="w-1/2">
                         <img
                             :src="
-                                PlacementimagePreview ||
-                                `/storage/${PlacementsDetials.placement_image}`
+                                PlacementimagePreview == null
+                                    ? `/storage/${PlacementsDetials.placement_image}`
+                                    : PlacementimagePreview
                             "
                             alt="Placement Image"
                             class="object-cover w-full h-40 rounded-md"
@@ -403,7 +484,7 @@ const previewPlacementImage = (event: Event) => {
         </DialogModal>
         <!-- End Edit Placement Modal -->
 
-         <!-- Add More Placement -->
+        <!-- Add More Placement -->
         <DialogModal>
             <template #title>
                 <h2>DeletePlacement</h2>
@@ -429,7 +510,6 @@ const previewPlacementImage = (event: Event) => {
             </template>
         </DialogModal>
         <!-- End Add More Placement -->
-
 
         <!-- Cinema Data -->
         <div
@@ -465,20 +545,107 @@ const previewPlacementImage = (event: Event) => {
                 v-if="isOpen"
                 class="px-4 py-4 md:px-6 xl:px-7.5 border-t border-stroke dark:border-strokedark"
             >
-                <div class="w-full flex">
-                    <div class="w-1/2 my-1 mx-3">
-                        <label
-                            class="mb-3 block text-sm font-medium text-black dark:text-white text-[15px]"
+                <div
+                    v-if="isDifferenceEmpty()"
+                    class="mt-5 mb-5 w-full flex"
+                >
+                    <div class="mx-1">
+                        <button
+                            @click="ToggleDifferenceAddress"
+                            :class="'font-bold text-md bg-blue-300 p-2 rounded-md text-black'"
                         >
-                            Cinema Name
-                        </label>
-                        <input
-                            type="text"
-                            v-model="cinemas.cinema_name"
-                            class="input-style"
-                        />
+                            Show Difference address
+                        </button>
                     </div>
-                    <div class="w-1/2 xl:w-1/1 my-1 mx-3">
+                </div>
+                <div v-if="!isDifferenceAddressShow"> 
+              
+                    <div class="w-full flex">
+       
+                        <div class="w-1/2 my-1 mx-3">
+                            <label
+                                class="mb-3 block text-sm font-medium text-black dark:text-white text-[15px]"
+                            >
+                                Cinema Name
+                            </label>
+                            <input
+                                type="text"
+                                v-model="cinemas.cinema_name"
+                                class="input-style"
+                            />
+                        </div>
+                        <div class="w-1/2 xl:w-1/1 my-1 mx-3">
+                            <label
+                                class="mb-3 block text-sm font-medium text-black dark:text-white text-[15px]"
+                            >
+                                address_1
+                            </label>
+                            <input
+                                type="text"
+                                v-model="cinemas.address_1"
+                                class="input-style"
+                            />
+                        </div>
+                    </div>
+                    <div class="w-full flex">
+                        <div class="w-1/2 my-1 mx-3 font-bold">
+                            <label
+                                class="mb-3 block text-sm font-medium text-black dark:text-white text-[15px]"
+                            >
+                                address_2
+                            </label>
+                            <input
+                                type="text"
+                                v-model="cinemas.address_2"
+                                class="input-style text-[15px]"
+                            />
+                        </div>
+                        <div class="w-1/2 xl:w-1/1 my-1 mx-3 font-bold">
+                            <label
+                                class="mb-3 block text-sm font-medium text-black dark:text-white text-[15px]"
+                            >
+                                zip code
+                            </label>
+                            <input
+                                type="text"
+                                v-model="cinemas.zip"
+                                class="input-style"
+                            />
+                        </div>
+                    </div>
+                    <div class="w-full flex">
+                        <div class="w-1/2 my-1 mx-3 font-bold">
+                            <label
+                                class="mb-3 block text-sm font-medium text-black dark:text-white text-[15px]"
+                            >
+                                city
+                            </label>
+                            <input
+                                type="text"
+                                v-model="cinemas.city"
+                                class="input-style"
+                            />
+                        </div>
+                        <div class="w-1/2 xl:w-1/1 my-1 mx-3 font-bold">
+                            <label
+                                class="mb-3 block text-sm font-medium text-black dark:text-white text-[15px]"
+                            >
+                                state
+                            </label>
+                            <input
+                                type="text"
+                                v-model="cinemas.state"
+                                class="input-style"
+                            />
+                        </div>
+                    </div>
+                </div>
+                <!-- Start Difference Address -->
+                <div v-if="isDifferenceAddressShow">
+                    <div class="w-full">
+                            <h2 class="text-2xl font-bold my-1 mx-3 mt-3 mb-3"> Difference Delivery Address </h2>
+                        </div>
+                    <div class="w-1/1 flex flex-col mx-3 my-1">
                         <label
                             class="mb-3 block text-sm font-medium text-black dark:text-white text-[15px]"
                         >
@@ -486,65 +653,65 @@ const previewPlacementImage = (event: Event) => {
                         </label>
                         <input
                             type="text"
-                            v-model="cinemas.address_1"
+                            v-model="DiffenceAddress.address_1"
                             class="input-style"
                         />
+                    </div>
+                    <div class="w-full flex">
+                        <div class="w-1/2 my-1 mx-3 font-bold">
+                            <label
+                                class="mb-3 block text-sm font-medium text-black dark:text-white text-[15px]"
+                            >
+                                address_2
+                            </label>
+                            <input
+                                type="text"
+                                v-model="DiffenceAddress.address_2"
+                                class="input-style text-[15px] "
+                            />
+                        </div>
+                        <div class="w-1/2 xl:w-1/1 my-1 mx-3 font-bold">
+                            <label
+                                class="mb-3 block text-sm font-medium text-black dark:text-white text-[15px]"
+                            >
+                                zip code
+                            </label>
+                            <input
+                                type="text"
+                                v-model="DiffenceAddress.zip"
+                                class="input-style"
+                            />
+                        </div>
+                    </div>
+                    <div class="w-full flex">
+                        <div class="w-1/2 my-1 mx-3 font-bold">
+                            <label
+                                class="mb-3 block text-sm font-medium text-black dark:text-white text-[15px]"
+                            >
+                                city
+                            </label>
+                            <input
+                                type="text"
+                                v-model="DiffenceAddress.city"
+                                class="input-style"
+                            />
+                        </div>
+                        <div class="w-1/2 xl:w-1/1 my-1 mx-3 font-bold">
+                            <label
+                                class="mb-3 block text-sm font-medium text-black dark:text-white text-[15px]"
+                            >
+                                state
+                            </label>
+                            <input
+                                type="text"
+                                v-model="DiffenceAddress.state"
+                                class="input-style"
+                            />
+                        </div>
                     </div>
                 </div>
-                <div class="w-full flex">
-                    <div class="w-1/2 my-1 mx-3 font-bold">
-                        <label
-                            class="mb-3 block text-sm font-medium text-black dark:text-white text-[15px]"
-                        >
-                            address_2
-                        </label>
-                        <input
-                            type="text"
-                            v-model="cinemas.address_2"
-                            class="input-style text-[15px]"
-                        />
-                    </div>
-                    <div class="w-1/2 xl:w-1/1 my-1 mx-3 font-bold">
-                        <label
-                            class="mb-3 block text-sm font-medium text-black dark:text-white text-[15px]"
-                        >
-                            zip code
-                        </label>
-                        <input
-                            type="text"
-                            v-model="cinemas.zip"
-                            class="input-style"
-                        />
-                    </div>
-                </div>
-                <div class="w-full flex">
-                    <div class="w-1/2 my-1 mx-3 font-bold">
-                        <label
-                            class="mb-3 block text-sm font-medium text-black dark:text-white text-[15px]"
-                        >
-                            city
-                        </label>
-                        <input
-                            type="text"
-                            v-model="cinemas.city"
-                            class="input-style"
-                        />
-                    </div>
-                    <div class="w-1/2 xl:w-1/1 my-1 mx-3 font-bold">
-                        <label
-                            class="mb-3 block text-sm font-medium text-black dark:text-white text-[15px]"
-                        >
-                            state
-                        </label>
-                        <input
-                            type="text"
-                            v-model="cinemas.state"
-                            class="input-style"
-                        />
-                    </div>
-                </div>
-
                 <div
+                    v-if="!isDifferenceAddressShow"
                     class="w-1/2 xl:w-1/1 my-1 mx-3 w-[250px] font-bold flex flex-col"
                 >
                     <div v-if="cinema_data.image !== null">
@@ -580,7 +747,7 @@ const previewPlacementImage = (event: Event) => {
                         />
                     </div>
                 </div>
-                <div class="my-5 mt-4">
+                <div class="my-5 mt-4" v-if="!isDifferenceAddressShow">
                     <button
                         @click="updateCinemasData"
                         class="w-30 h-10 mt-4 rounded-md text-black font-bold my-1 mx-3 bg-blue-400"

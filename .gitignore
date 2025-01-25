@@ -18,4 +18,6 @@ yarn-error.log
 /.fleet
 /.idea
 /.vscode
+movie_manager.zip
+*.zip
 
