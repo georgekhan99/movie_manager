@@ -53,7 +53,6 @@ const props = defineProps<{
     };
 }>();
 
-
 function parseDifferenceAddress(
     data: string | object | null
 ): DifferenceCinemas {
@@ -104,13 +103,13 @@ const DiffenceAddress = ref<DifferenceCinemas>(
     parseDifferenceAddress(props.cinema_data?.Difference_Address)
 );
 
-const isDifferenceEmpty = ():boolean => {
-    if(props.cinema_data?.Difference_Address.length > 0){
-        return true
-    }else {
-        return false
+const isDifferenceEmpty = (): boolean => {
+    if (props.cinema_data?.Difference_Address.length > 0) {
+        return true;
+    } else {
+        return false;
     }
-}
+};
 
 const isOpen = ref(false);
 const image = ref(null);
@@ -258,8 +257,8 @@ const DeletePlacement = async () => {
 
 const isDifferenceAddressShow = ref(false);
 const ToggleDifferenceAddress = () => {
-  isDifferenceAddressShow.value = !isDifferenceAddressShow.value; 
-}
+    isDifferenceAddressShow.value = !isDifferenceAddressShow.value;
+};
 
 const Placementsimage = ref<File | null>(null);
 const PlacementimagePreview = ref<string | null>(null);
@@ -269,7 +268,7 @@ const previewPlacementImage = (event: Event) => {
         Placementsimage.value = file;
         const reader = new FileReader();
         reader.onload = (e) => {
-            PlacementimagePreview.value = e.target?.result // Generate base64 preview
+            PlacementimagePreview.value = e.target?.result; // Generate base64 preview
         };
         reader.readAsDataURL(file); // Read the file as a data URL
     }
@@ -545,10 +544,7 @@ const previewPlacementImage = (event: Event) => {
                 v-if="isOpen"
                 class="px-4 py-4 md:px-6 xl:px-7.5 border-t border-stroke dark:border-strokedark"
             >
-                <div
-                    v-if="isDifferenceEmpty()"
-                    class="mt-5 mb-5 w-full flex"
-                >
+                <div v-if="isDifferenceEmpty()" class="mt-5 mb-5 w-full flex">
                     <div class="mx-1">
                         <button
                             @click="ToggleDifferenceAddress"
@@ -558,10 +554,8 @@ const previewPlacementImage = (event: Event) => {
                         </button>
                     </div>
                 </div>
-                <div v-if="!isDifferenceAddressShow"> 
-              
+                <div v-if="!isDifferenceAddressShow">
                     <div class="w-full flex">
-       
                         <div class="w-1/2 my-1 mx-3">
                             <label
                                 class="mb-3 block text-sm font-medium text-black dark:text-white text-[15px]"
@@ -643,8 +637,10 @@ const previewPlacementImage = (event: Event) => {
                 <!-- Start Difference Address -->
                 <div v-if="isDifferenceAddressShow">
                     <div class="w-full">
-                            <h2 class="text-2xl font-bold my-1 mx-3 mt-3 mb-3"> Difference Delivery Address </h2>
-                        </div>
+                        <h2 class="text-2xl font-bold my-1 mx-3 mt-3 mb-3">
+                            Difference Delivery Address
+                        </h2>
+                    </div>
                     <div class="w-1/1 flex flex-col mx-3 my-1">
                         <label
                             class="mb-3 block text-sm font-medium text-black dark:text-white text-[15px]"
@@ -667,7 +663,7 @@ const previewPlacementImage = (event: Event) => {
                             <input
                                 type="text"
                                 v-model="DiffenceAddress.address_2"
-                                class="input-style text-[15px] "
+                                class="input-style text-[15px]"
                             />
                         </div>
                         <div class="w-1/2 xl:w-1/1 my-1 mx-3 font-bold">
@@ -766,11 +762,12 @@ const previewPlacementImage = (event: Event) => {
                 <h4 class="text-xl font-bold text-black dark:text-white">
                     Placements List
                 </h4>
-                <div
-                    class="px-4 w-20 h-10 bg-blue-300 flex items-center justify-center rounded-md text-xl text-bold hover:opacity-[0.5]"
+                <a
+                    :href="`/dashboard/placement/add/${$page.props.cinema_data.id}/`"
+                    class="px-4 w-20 h-10 bg-blue-400 flex items-center justify-center rounded-md text-xl text-white font-bold hover:opacity-50"
                 >
-                    Add
-                </div>
+                    +
+                </a>
             </div>
 
             <div
@@ -790,8 +787,7 @@ const previewPlacementImage = (event: Event) => {
                 </div>
             </div>
 
-            <div v-if="CinemaData.length === 0">No Data</div>
-
+            <div v-if="CinemaData.length === 0" class="text-2xl font-semibold text-black text-center mt-5 mb-5">No Data</div>
             <div
                 v-if="CinemaData.length > 0"
                 v-for="c in CinemaData"

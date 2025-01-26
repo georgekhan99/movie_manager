@@ -38,7 +38,6 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified',
     Route::get('/dashboard/user/delete/{id}', [App\Http\Controllers\UsersController::class, 'deleteUser'])->name('delete.user');
     Route::post('/dashboard/user/update', [App\Http\Controllers\UsersController::class, 'updateUser'])->name('update.user');
     
-
     //Company 
     Route::get('/dashboard/company/list', function (){
         return Inertia::render('AdminDashboard/Company/CompanyManager');
@@ -57,11 +56,11 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified',
     Route::get('/dashboard/cinema/create/{id}', [App\Http\Controllers\CinemaController::class, 'CreateCinemasWithId'])->name('adminpage.cinema.create.withid');
     Route::get('/dashboard/cinema/{id}/view', [App\Http\Controllers\CinemaController::class, 'getCinemaListPageload'])->name('adminpage.cinema.placements.list');
     Route::get('/dashboard/placement/{id}', [App\Http\Controllers\CinemaController::class, 'getPlacementByID'])->name('adminpage.getplacement.id');
+    Route::get('/dashboard/placement/add/{id}',[App\Http\Controllers\CinemaController::class, 'getPageAddMorePlacement'])->name('adminpage.placement.addmore');
     Route::post('/dashboard/cinema/update',[App\Http\Controllers\CinemaController::class, 'updateCinema'])->name('adminpage.cinema.updates.cinemas');
     Route::post('/dashboard/placement/update',[App\Http\Controllers\CinemaController::class, 'updateplacement'])->name('adminpage.placement.updates');
     Route::post('/dashboard/placement/delete',[App\Http\Controllers\CinemaController::class, 'deletePlacement'])->name('adminpage.placement.delete');
-    Route::get('/dashboard/placement/placement/add/{id}',[App\Http\Controllers\CinemaController::class, 'getPageAddMorePlacement'])->name('adminpage.placement.addmore');
-    
+    Route::post('/dashboard/placement/add/more',[App\Http\Controllers\CinemaController::class, 'saveMorePlacement'])->name('adminpage.placement.savemore');
     
     //All Cinema
     Route::get('/dashboard/cinema/', [App\Http\Controllers\CinemaController::class, 'getCinemaPageLoad'])->name('adminpage.cinema.AllCinemas');
