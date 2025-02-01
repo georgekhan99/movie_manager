@@ -10,8 +10,10 @@ use App\Models\Duration;
 class BookingsController extends Controller
 {
     public function getCalendarPageload(){
+        
         return Inertia::render('AdminDashboard/BookingCalendar/CalendarPage');
     }
+
     public function showDuration(){
         //ประกาศวันที่เริ่มต้น;
         $duration = Duration::all();

@@ -21,4 +21,5 @@ class Cinemas extends Model
         'image',
         'Difference_Address'
     ];
+
 }

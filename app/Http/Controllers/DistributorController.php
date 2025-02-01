@@ -2,9 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Cinemas;
 use App\Models\Company;
 use App\Models\movies;
+use App\Models\Placement;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 
 class DistributorController extends Controller
@@ -75,6 +78,27 @@ class DistributorController extends Controller
         );
     }
 
+    public function BookingCalendar($id){
+        
+        $releaseDate = movies::findOrFail($id)->first();
+        $placementList = DB::table('cinema_placements')
+        ->join('cinemas', 'cinemas.id', '=', "cinema_placements.cinema_id")
+        ->select('cinemas.cinema_name', 'cinema_placements.placement_name')
+        ->get()
+        ->groupBy('cinema_name')
+        ->map(function ($group) {
+            return [
+                'cinema_name' => $group->first()->cinema_name,
+                'placement_name' => $group->pluck('placement_name')->toArray(),
+            ];
+        })->values();
+
+        $durationsList = null;
+
+
+        return Inertia::render('DistributorDashboard/BookingCalendar', ['releaseDate' => $releaseDate, 'PlacementList' => $placementList ]);
+    }
+
     public function getEditMoviePage($id)
     {
         $id = null;
@@ -89,6 +113,7 @@ class DistributorController extends Controller
 
     public function showCalendar()
     {
+        
         return Inertia::render('DistributorDashboard/PlacementCalendar');
     }
 }

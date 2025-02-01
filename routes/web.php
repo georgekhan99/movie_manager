@@ -75,6 +75,8 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified',
     Route::post('/distributor/movie/save', [App\Http\Controllers\DistributorController::class, 'addMovie'])->name('movie.save');
     Route::post('/distributor/edit/movie', [App\Http\Controllers\DistributorController::class, 'EditMovie'])->name('distributor.movie.edit');
     Route::get('/distributor/delete/movie/{id}', [App\Http\Controllers\DistributorController::class, 'DeleteMovie'])->name('distributor.movie.edit');
+    // Route::get('/distributor/calendar/booking/{MovieId}', [App\Http\Controllers\DistributorController::class, 'DeleteMovie'])->name('distributor.calendar.booking');
+    Route::get('/distributor/bookings/{id}', [App\Http\Controllers\DistributorController::class, 'BookingCalendar'])->name('distributor.get.movieCalendar');
 
     //Booking Calendar
     Route::get('bookings/calendar/view',[App\Http\Controllers\BookingsController::class, 'getCalendarPageload'])->name('bookigs.calendar.view');

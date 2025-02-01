@@ -259,6 +259,12 @@ const HandleDeleteMovie = async (id) => {
                             Delete Movie
                         </span>
                     </a>
+                    <a
+                        class="hover:text-primary relative group mx-1"
+                        @click="HandleDeleteMovie(movie.id)"
+                    >
+                    Booking
+                    </a>
                     <!-- Confirmation Modal -->
                 </div>
             </div>
