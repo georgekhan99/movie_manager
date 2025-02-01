@@ -4,11 +4,13 @@ namespace App\Http\Controllers;
 
 use App\Models\Cinemas;
 use App\Models\Company;
+use App\Models\Duration;
 use App\Models\movies;
 use App\Models\Placement;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
+use Carbon\Carbon;
 
 class DistributorController extends Controller
 {
@@ -79,8 +81,13 @@ class DistributorController extends Controller
     }
 
     public function BookingCalendar($id){
+        //get Release Date
+       
+        $MovieReleaseDate = movies::findOrFail($id, ['id','movies_name','movies_release_date']);
+        $releaseDate = Duration::whereRaw('? BETWEEN start_date AND DATE_ADD(start_date, INTERVAL 14 DAY)', [$MovieReleaseDate->movies_release_date])
+        ->first(['id', 'start_date']);
         
-        $releaseDate = movies::findOrFail($id)->first();
+        //get Placement List
         $placementList = DB::table('cinema_placements')
         ->join('cinemas', 'cinemas.id', '=', "cinema_placements.cinema_id")
         ->select('cinemas.cinema_name', 'cinema_placements.placement_name')
@@ -93,10 +100,29 @@ class DistributorController extends Controller
             ];
         })->values();
 
-        $durationsList = null;
+        // Fetch Previous 3 Durations $MovieReleaseDate->start_date
+        $previousDurations = Duration::where('start_date', '<', $releaseDate->start_date)
+        ->orderBy('start_date', 'asc')
+        ->limit(3)
+        ->pluck('start_date')
+        ->toArray();
 
+        // // Fetch next 3 durations
+        $nextDurations = Duration::where('start_date', '>', $releaseDate->start_date)
+        ->orderBy('start_date', 'desc')
+        ->limit(3)
+        ->pluck('start_date')
+        ->toArray();
 
-        return Inertia::render('DistributorDashboard/BookingCalendar', ['releaseDate' => $releaseDate, 'PlacementList' => $placementList ]);
+        $durations = array_merge(array_reverse($previousDurations), [$releaseDate->start_date], $nextDurations);
+        
+
+        return Inertia::render('DistributorDashboard/BookingCalendar', [
+            'releaseDate' => $releaseDate,
+            'PlacementList' => $placementList,
+            'durations' => $durations, // Pass all durations to frontend
+        ]);
+
     }
 
     public function getEditMoviePage($id)
