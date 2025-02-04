@@ -1,105 +1,112 @@
 <script setup lang="ts">
 import DefaultLayout from "../../Layouts/DefaultLayout.vue";
 import { usePage } from "@inertiajs/vue3";
-import { ref, onMounted } from "vue";
+import { ref } from "vue";
 
 // Get Inertia Props
 const page = usePage();
-const durations = ref<string[]>(page.props.durations || []); // Ensure durations exist
+const durations = ref<{ id: number; start_date: string }[]>(page.props.durations || []);
 
-// Define Props for Component
 defineProps<{
-  releaseDate: { id: number; movies_name: string; movies_release_date: string };
-  PlacementList: Array<{ cinema_name: string; placement_name: string[]; periodData: string[] }>;
+  Movie_details: { id: number; movies_name: string; movies_release_date: string };
+  PlacementList: Array<{ cinema_name: string; placements: { placement_id: number; placement_name: string }[] }>;
 }>();
 
-// Periods for Table Header
-const periods = ref<string[]>([]);
+// Store selected bookings (placement + duration)
+const selectedBookings = ref<{ placementId: number; durationId: number }[]>([]);
 
-// Function to Convert Dates into Period Format
-const setPeriods = () => {
-  if (durations.value.length > 1) {
-    periods.value = durations.value.map((date, index, arr) => {
-      if (index < arr.length - 1) {
-        return `${formatDate(date)} - ${formatDate(arr[index + 1])}`;
-      }
-      return null;
-    }).filter(Boolean) as string[];
+// Function to add/remove selections
+const toggleBooking = (placementId: number, durationId: number) => {
+  const duration = durations.value.find(d => d.id === durationId);
+
+  if (!duration) return;
+  console.log(selectedBookings.value);
+  const index = selectedBookings.value.findIndex(
+    (b) => b.placementId === placementId && b.durationId === duration.id
+  );
+
+  if (index === -1) {
+    selectedBookings.value.push({ placementId, durationId: duration.id });
+  } else {
+    selectedBookings.value.splice(index, 1);
   }
 };
 
-// Helper Function to Format Dates
-const formatDate = (dateStr: string): string => {
-  const date = new Date(dateStr);
-  return date.toISOString().split("T")[0]; // Format as YYYY-MM-DD
+// Function to format date as "DD/MM/YYYY"
+const formatDate = (dateString: string): string => {
+  const date = new Date(dateString);
+  const day = date.getDate().toString().padStart(2, "0");
+  const month = (date.getMonth() + 1).toString().padStart(2, "0");
+  const year = date.getFullYear();
+  return `${day}/${month}/${year}`;
 };
 
-// Run on component load
-onMounted(setPeriods);
+// Function to generate "Start Date - End Date" format
+const getDateRange = (startDate: string): string => {
+  const start = new Date(startDate);
+  const end = new Date(start);
+  end.setDate(start.getDate() + 14); // Add 14 days to get the correct period
+  return `${formatDate(startDate)} - ${formatDate(end.toISOString().split("T")[0])}`;
+};
 </script>
 
 <template>
-    {{ periods }}
   <DefaultLayout title="Cinema List">
     <div class="p-6 bg-white rounded shadow-md">
-      <!-- Title -->
-      <h1 class="text-3xl font-semibold text-gray-800 mb-6">Booking Calendar</h1>
-      <h4 class="text-xl font-semibold">Movie Name: {{ releaseDate.movies_name }}</h4>
+      <div class="flex justify-between">
+        <h1 class="text-3xl font-semibold text-gray-800 mb-6">Booking Calendar</h1>
+        <button class="w-20 h-10 bg-blue-500 text-white font-semibold rounded-xl hover:bg-blue-400 transiton delay-100">Submit</button>
+      </div>
+      <div class="flex justify-between mx-3">
+        <h4 class="text-xl font-semibold my-3">Movie Name: {{ Movie_details.movies_name }}</h4>
+        <h4 class="text-xl font-semibold my-3">Release Date: {{ Movie_details.movies_release_date }}</h4>
+      </div>
 
-      <!-- Dynamic Table -->
       <div class="overflow-x-auto w-full">
         <table class="min-w-full border-collapse border border-gray-300">
-          <!-- Table Header -->
           <thead>
             <tr class="bg-gray-200 text-gray-700">
               <th class="border border-gray-300 px-6 py-3 w-1/5">Cinema</th>
               <th class="border border-gray-300 px-6 py-3 w-1/5">Placement</th>
               <th
-                v-for="period in periods"
-                :key="period"
+                v-for="(duration, index) in durations"
+                :key="duration.id"
                 class="border border-gray-300 px-6 py-3 text-center w-1/10"
               >
-                {{ period }}
+                {{ getDateRange(duration.start_date) }}
               </th>
             </tr>
           </thead>
 
-          <!-- Table Body -->
           <tbody>
             <template v-for="(row, index) in PlacementList" :key="index">
-              <tr class="hover:bg-gray-100">
-                <!-- Cinema name spans all placement rows -->
-                <td
-                  v-if="row.placement_name.length > 0"
-                  :rowspan="row.placement_name.length"
-                  class="border border-gray-300 px-6 py-4 font-medium text-gray-900 align-top"
-                >
-                  {{ row.cinema_name }}
-                </td>
-                <td class="border border-gray-300 px-6 py-4 text-gray-700">
-                  {{ row.placement_name[0] }}
-                </td>
-                <td
-                  v-for="(status, i) in row.periodData"
-                  :key="i"
-                  class="border border-gray-300 px-6 py-4 text-center text-gray-600"
-                >
-                  N/A
-                </td>
-              </tr>
-              <!-- Additional rows for placements -->
-              <tr v-for="(placement, idx) in row.placement_name.slice(1)" :key="idx" class="hover:bg-gray-100">
-                <td class="border border-gray-300 px-6 py-4 text-gray-700">
-                  {{ placement }}
-                </td>
-                <td
-                  v-for="(status, i) in row.periodData"
-                  :key="i"
-                  class="border border-gray-300 px-6 py-4 text-center text-gray-600"
-                >
-                  {{ status || "N/A" }}
-                </td>
-              </tr>
+              <template v-for="(placement, idx) in row.placements" :key="placement.placement_id">
+                <tr>
+                  <!-- Render cinema name only in the first row -->
+                  <td
+                    v-if="idx === 0"
+                    :rowspan="row.placements.length"
+                    class="border border-gray-300 px-6 py-4 font-medium text-gray-900 align-top"
+                  >
+                    {{ row.cinema_name }}
+                  </td>
+                  <!-- Placement Name -->
+                  <td class="border border-gray-300 px-6 py-4 text-gray-700">
+                    {{ placement.placement_name }}
+                  </td>
+                  <!-- Checkboxes for each duration -->
+                  <td
+                    v-for="(duration, i) in durations"
+                    :key="duration.id"
+                    class="border border-gray-300 px-6 py-4 text-center text-gray-600"
+                  >
+                    <input
+                      type="checkbox"
+                      @change="toggleBooking(placement.placement_id, duration.id)"
+                    />
+                  </td>
+                </tr>
+              </template>
             </template>
           </tbody>
         </table>

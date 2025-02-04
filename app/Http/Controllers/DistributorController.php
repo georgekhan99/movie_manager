@@ -80,50 +80,61 @@ class DistributorController extends Controller
         );
     }
 
-    public function BookingCalendar($id){
-        //get Release Date
-       
-        $MovieReleaseDate = movies::findOrFail($id, ['id','movies_name','movies_release_date']);
-        $releaseDate = Duration::whereRaw('? BETWEEN start_date AND DATE_ADD(start_date, INTERVAL 14 DAY)', [$MovieReleaseDate->movies_release_date])
-        ->first(['id', 'start_date']);
-        
-        //get Placement List
+    public function BookingCalendar($id) {
+        // Get Movie Details
+        $MovieReleaseDate = movies::findOrFail($id, ['id', 'movies_name', 'movies_release_date']);
+    
+        // Get the Current Duration
+        $releaseDate = Duration::whereRaw('? BETWEEN start_date AND DATE_ADD(start_date, INTERVAL 14 DAY)', 
+            [$MovieReleaseDate->movies_release_date])
+            ->first(['id', 'start_date']);
+    
+        if (!$releaseDate) {
+            return response()->json(['error' => 'No matching duration found'], 404);
+        }
+    
+        // Fetch Placement List (Ensure `placement_id` is included)
         $placementList = DB::table('cinema_placements')
-        ->join('cinemas', 'cinemas.id', '=', "cinema_placements.cinema_id")
-        ->select('cinemas.cinema_name', 'cinema_placements.placement_name')
-        ->get()
-        ->groupBy('cinema_name')
-        ->map(function ($group) {
-            return [
-                'cinema_name' => $group->first()->cinema_name,
-                'placement_name' => $group->pluck('placement_name')->toArray(),
-            ];
-        })->values();
-
-        // Fetch Previous 3 Durations $MovieReleaseDate->start_date
+            ->join('cinemas', 'cinemas.id', '=', 'cinema_placements.cinema_id')
+            ->select('cinemas.cinema_name', 'cinema_placements.id as placement_id', 'cinema_placements.placement_name')
+            ->get()
+            ->groupBy('cinema_name')
+            ->map(function ($group) {
+                return [
+                    'cinema_name' => $group->first()->cinema_name,
+                    'placements' => $group->map(function ($placement) {
+                        return [
+                            'placement_id' => $placement->placement_id,
+                            'placement_name' => $placement->placement_name
+                        ];
+                    })->toArray()
+                ];
+            })->values();
+    
+        // Fetch Previous 3 Durations
         $previousDurations = Duration::where('start_date', '<', $releaseDate->start_date)
-        ->orderBy('start_date', 'asc')
-        ->limit(3)
-        ->pluck('start_date')
-        ->toArray();
-
-        // // Fetch next 3 durations
+            ->orderBy('start_date', 'desc')
+            ->limit(3)
+            ->get(['id', 'start_date']);
+        $previousDurations = $previousDurations->reverse(); // Fix order
+    
+        // Fetch Next 3 Durations
         $nextDurations = Duration::where('start_date', '>', $releaseDate->start_date)
-        ->orderBy('start_date', 'desc')
-        ->limit(3)
-        ->pluck('start_date')
-        ->toArray();
-
-        $durations = array_merge(array_reverse($previousDurations), [$releaseDate->start_date], $nextDurations);
-        
-
+            ->orderBy('start_date', 'asc')
+            ->limit(3)
+            ->get(['id', 'start_date']);
+    
+        // Merge Durations to Ensure Correct Order
+        $durations = $previousDurations->merge([$releaseDate])->merge($nextDurations);
+    
         return Inertia::render('DistributorDashboard/BookingCalendar', [
             'releaseDate' => $releaseDate,
             'PlacementList' => $placementList,
-            'durations' => $durations, // Pass all durations to frontend
+            'durations' => $durations, // Pass durations as array of objects (id + start_date)
+            'Movie_details' => $MovieReleaseDate
         ]);
-
     }
+    
 
     public function getEditMoviePage($id)
     {
