@@ -2,6 +2,7 @@
 import DefaultLayout from "../../Layouts/DefaultLayout.vue";
 import { usePage } from "@inertiajs/vue3";
 import { ref } from "vue";
+import axios from "axios";
 
 // Get Inertia Props
 const page = usePage();
@@ -14,21 +15,46 @@ defineProps<{
 
 // Store selected bookings (placement + duration)
 const selectedBookings = ref<{ placementId: number; durationId: number }[]>([]);
+const isSubmitting = ref(false);
+const successMessage = ref("");
+const errorMessage = ref("");
 
 // Function to add/remove selections
 const toggleBooking = (placementId: number, durationId: number) => {
-  const duration = durations.value.find(d => d.id === durationId);
-
-  if (!duration) return;
-  console.log(selectedBookings.value);
   const index = selectedBookings.value.findIndex(
-    (b) => b.placementId === placementId && b.durationId === duration.id
+    (b) => b.placementId === placementId && b.durationId === durationId
   );
 
   if (index === -1) {
-    selectedBookings.value.push({ placementId, durationId: duration.id });
+    selectedBookings.value.push({ placementId, durationId });
   } else {
     selectedBookings.value.splice(index, 1);
+  }
+};
+
+// Function to submit bookings
+const submitBookings = async () => {
+  if (selectedBookings.value.length === 0) {
+    alert("Please select at least one placement and duration.");
+    return;
+  }
+
+  isSubmitting.value = true;
+  successMessage.value = "";
+  errorMessage.value = "";
+
+  try {
+    await axios.post("/bookings/create", {
+      movie_id: page.props.Movie_details.id,
+      selected_bookings: selectedBookings.value,
+    });
+
+    successMessage.value = "Booking successfully created!";
+    selectedBookings.value = []; // Clear selections after success
+  } catch (error) {
+    errorMessage.value = error.response?.data?.error || "Booking failed.";
+  } finally {
+    isSubmitting.value = false;
   }
 };
 
@@ -55,8 +81,22 @@ const getDateRange = (startDate: string): string => {
     <div class="p-6 bg-white rounded shadow-md">
       <div class="flex justify-between">
         <h1 class="text-3xl font-semibold text-gray-800 mb-6">Booking Calendar</h1>
-        <button class="w-20 h-10 bg-blue-500 text-white font-semibold rounded-xl hover:bg-blue-400 transiton delay-100">Submit</button>
+        <button
+          :disabled="isSubmitting || selectedBookings.length === 0"
+          @click="submitBookings"
+          class="w-20 h-10 bg-blue-500 text-white font-semibold rounded-xl hover:bg-blue-400 transition delay-100 disabled:bg-gray-400"
+        >
+          Submit
+        </button>
       </div>
+
+      <div v-if="successMessage" class="bg-green-200 text-green-700 p-3 rounded-md mb-4">
+        {{ successMessage }}
+      </div>
+      <div v-if="errorMessage" class="bg-red-200 text-red-700 p-3 rounded-md mb-4">
+        {{ errorMessage }}
+      </div>
+
       <div class="flex justify-between mx-3">
         <h4 class="text-xl font-semibold my-3">Movie Name: {{ Movie_details.movies_name }}</h4>
         <h4 class="text-xl font-semibold my-3">Release Date: {{ Movie_details.movies_release_date }}</h4>

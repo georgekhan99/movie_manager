@@ -82,6 +82,8 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified',
     Route::get('bookings/calendar/view',[App\Http\Controllers\BookingsController::class, 'getCalendarPageload'])->name('bookigs.calendar.view');
     Route::get('bookings/duration/view',[App\Http\Controllers\BookingsController::class, 'showDuration'])->name('bookigs.duration.view');
     Route::post('/duration/update/{id}',[App\Http\Controllers\BookingsController::class, 'UpdateDeadline'])->name('bookigs.duration.update');
+    Route::get('bookings/manager/distributor', [App\Http\Controllers\BookingsController::class, 'getBookingManagerPageload'])->name('bookigs.pageload');
+    Route::post('/bookings/create', [App\Http\Controllers\BookingsController::class, 'createBookings'])->name('bookigs.create');
 
 });
 
