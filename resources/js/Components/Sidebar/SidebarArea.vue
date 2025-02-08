@@ -35,6 +35,7 @@ const menuGroups = ref([
         children: [
         { label: 'All Cinemas', route: 'adminpage.cinema.AllCinemas' },
         { label: 'Create Cinemas', route: 'create.cinemas.noid' },
+        { label: 'My Cinemas', route: 'cinemaadmin.mycinema' },
        ]
       },
       {
@@ -55,6 +56,7 @@ const menuGroups = ref([
         children: [
         { label: 'Add Movie', route: 'distributor.add.movie' },
         { label: 'Movie Manager', route: 'distributor.movie.all' },
+       
        ]
       },
     ]

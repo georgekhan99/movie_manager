@@ -57,6 +57,8 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified',
     Route::get('/dashboard/cinema/{id}/view', [App\Http\Controllers\CinemaController::class, 'getCinemaListPageload'])->name('adminpage.cinema.placements.list');
     Route::get('/dashboard/placement/{id}', [App\Http\Controllers\CinemaController::class, 'getPlacementByID'])->name('adminpage.getplacement.id');
     Route::get('/dashboard/placement/add/{id}',[App\Http\Controllers\CinemaController::class, 'getPageAddMorePlacement'])->name('adminpage.placement.addmore');
+    Route::get('/dashboard/cinema/my-cinema',[App\Http\Controllers\CinemaController::class, 'getMycinemaPageload'])->name('cinemaadmin.mycinema');
+    Route::get('/dashboard/cinema/placement-detail/{id}',[App\Http\Controllers\CinemaController::class, 'getCinemaBookingDetailPageload'])->name('cinemaadmin.myplacement');
     Route::post('/dashboard/cinema/update',[App\Http\Controllers\CinemaController::class, 'updateCinema'])->name('adminpage.cinema.updates.cinemas');
     Route::post('/dashboard/placement/update',[App\Http\Controllers\CinemaController::class, 'updateplacement'])->name('adminpage.placement.updates');
     Route::post('/dashboard/placement/delete',[App\Http\Controllers\CinemaController::class, 'deletePlacement'])->name('adminpage.placement.delete');

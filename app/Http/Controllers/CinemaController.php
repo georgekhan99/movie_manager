@@ -21,6 +21,23 @@ class CinemaController extends Controller
         ]);
     }
 
+    //Get Mycinema Page
+    public function getMycinemaPageload(){
+        //Fetch Only you Owner Cinemas
+        $cinemaList = DB::table('cinemas')->limit(3)->get();
+
+
+        return Inertia::render('MoviesManager/MyCinemaPage', [
+            'cinemaList' => $cinemaList
+        ]);
+    }
+
+    public function getCinemaBookingDetailPageload($id){
+        $id = 3;
+        return Inertia::render('MoviesManager/CinemaBookingDetail');
+    }
+
+
     function CreateCinemasWithId($id)
     {
         $companyList = Company::all();
