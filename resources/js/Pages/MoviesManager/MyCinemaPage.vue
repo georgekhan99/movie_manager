@@ -53,7 +53,7 @@ defineProps<{ cinemaList: Cinema[] }>();
 
                         <div class="col-span-2">
                             <Link
-                                href="/dashboard"
+                                :href="`/dashboard/cinema/placement-detail/${cinema.id}`"
                                 class="float-left text-primary"
                             >
                                 View

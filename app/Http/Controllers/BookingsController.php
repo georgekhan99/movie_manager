@@ -11,6 +11,7 @@ use App\Models\Booking_placement;
 use App\Models\Booking_duration;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use App\Models\bookings_detail;
 
 class BookingsController extends Controller
 {
@@ -43,6 +44,15 @@ class BookingsController extends Controller
             return redirect()->back()->with(['message' => 'Deadline updated successfully']);
         }
         return response()->json(['message' => 'Duration not found'], 404);
+    }
+
+    //Get Each of 
+    public function siglePlacementDetailPageload($id, $status){
+
+        $id = 5;
+        $status = "pending";
+
+        return Inertia::render('/MoviesManager/PlacementDetails', ['id' => $id, 'status'=> $status]);
     }
 
     //Get Bookings Manager
@@ -78,26 +88,28 @@ class BookingsController extends Controller
             'selected_bookings.*.placementId' => 'exists:cinema_placements,id',
             'selected_bookings.*.durationId' => 'exists:durations,id'
         ]);
-    
         // Create the booking
         $booking = Bookings::create([
             'movie_id' => $validated['movie_id'],
             'user_id' => Auth::id(),
             'status' => 'pending'
         ]);
-    
-        // Store placements & durations
-        foreach ($validated['selected_bookings'] as $selection) {
-            Booking_Placement::create([
-                'booking_id' => $booking->id,
-                'placement_id' => $selection['placementId']
-            ]);
-            Booking_Duration::create([
-                'booking_id' => $booking->id,
-                'duration_id' => $selection['durationId']
-            ]);
+        //start Create Bookings Details From Bookings Id.
+        if(!empty($booking)){
+            foreach ($validated['selected_bookings'] as $selection) {
+               $bookings = bookings_detail::create([
+                    'booking_id' => $booking->id,
+                    'placement_id' => $selection['placementId'],
+                    'duration_id' => $selection['durationId']
+                ]);
+            }
         }
-    
-        return response()->json(['message' => 'Booking successfully created!'], 201);
+        if($bookings){
+            return response()->json(['message' => 'Booking successfully created!'], 201);
+        }else{
+            return response()->json(['message'=> 'Booking Creating failed'], 500);
+        }
     }
+
+
 }

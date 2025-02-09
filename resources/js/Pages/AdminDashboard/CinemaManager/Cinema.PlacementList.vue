@@ -128,7 +128,8 @@ const previewImage = (event) => {
     console.log(image);
 };
 
-const cinemas = ref<Cinemas>({
+const cinemas = ref<Cinemas
+>({
     id: props.cinema_data.id,
     cinema_name: props.cinema_data.cinema_name,
     address_1: props.cinema_data.address_1,
