@@ -5,6 +5,8 @@ import CinemaTable from "../AdminDashboard/CinemaManager/patials/CinemaTable.vue
 
 </script>
 
+
+
 <template>
         <div class="mt-10">
             <CinemaTable :cinemalist="cinemaList">
