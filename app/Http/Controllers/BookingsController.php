@@ -47,12 +47,12 @@ class BookingsController extends Controller
     }
 
     //Get Each of 
-    public function siglePlacementDetailPageload($id, $status){
+    public function getPlcementStatus($id){
 
-        $id = 5;
-        $status = "pending";
+      
 
-        return Inertia::render('/MoviesManager/PlacementDetails', ['id' => $id, 'status'=> $status]);
+
+        return Inertia::render('MoviesManager/MovieStatusDetail', ['id' => $id]);
     }
 
     //Get Bookings Manager

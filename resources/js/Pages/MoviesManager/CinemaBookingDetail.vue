@@ -2,25 +2,38 @@
 import { ref } from "vue";
 import { usePage } from "@inertiajs/vue3";
 import DefaultLayout from "../../Layouts/DefaultLayout.vue";
+import { Link, router } from "@inertiajs/vue3";
+
+interface Placement {
+    placement_id: number;
+    placement_name: string;
+    available_countSet: number;
+    booked_count: number;
+    pending_count: number;
+}
+
+interface Cinema {
+    id: number;
+    cinema_name: string;
+}
 
 // ✅ Get data from Inertia props (Cinema + Placements)
 const page = usePage();
-const cinema = ref<{ id: number; cinema_name: string }>(page.props.cinema || {});
-const placements = ref<Array<{ 
-    placement_id: number; 
-    placement_name: string; 
-    available_count: number; 
-    booked_count: number; 
-    pending_count: number; 
-}>>(page.props.placements || []);
+const cinema = ref<Cinema | null>(page.props.cinema as Cinema || null);
+const placements = ref<Placement[]>(page.props.placements as Placement[] || []);
+//Navigate to Status detailed page
+const navigateTostatus = (placementId: number) => {
+    router.visit(`/bookings/placements/status/${placementId}`);
+}
+
+
+
+
+
 </script>
 
 <template>
-  
     <DefaultLayout>
-        <pre>
-            {{ placements }}
-        </pre>
         <div class="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <h2 class="text-title-md2 font-bold text-black dark:text-white">
                 Placements in {{ cinema.cinema_name }}
@@ -33,25 +46,37 @@ const placements = ref<Array<{
             </div>
 
             <!-- ✅ Table Header (Exactly as you requested) -->
-            <div class="grid grid-cols-5 border-t border-stroke px-4 py-4.5 dark:border-strokedark sm:grid-cols-7 md:px-6 2xl:px-7.5">
-                <div class="col-span-3 flex items-center"><p class="font-medium">Placement Name</p></div>
-                <div class="col-span-1 flex items-center"><p class="font-medium">Free</p></div>
-                <div class="col-span-1 flex items-center"><p class="font-medium">Booked</p></div>
-                <div class="col-span-1 flex items-center"><p class="font-medium">Pending</p></div>
-                <div class="col-span-1 flex items-center"><p class="font-medium">Action</p></div>
+            <div
+                class="grid grid-cols-5 border-t border-stroke px-4 py-4.5 dark:border-strokedark sm:grid-cols-7 md:px-6 2xl:px-7.5">
+                <div class="col-span-3 flex items-center">
+                    <p class="font-medium">Placement Name</p>
+                </div>
+                <div class="col-span-1 flex items-center">
+                    <p class="font-medium">Free</p>
+                </div>
+                <div class="col-span-1 flex items-center">
+                    <p class="font-medium">Booked</p>
+                </div>
+                <div class="col-span-1 flex items-center">
+                    <p class="font-medium">Pending</p>
+                </div>
+                <div class="col-span-1 flex items-center">
+                    <p class="font-medium">Action</p>
+                </div>
             </div>
 
             <!-- ✅ Table Body (Placements with Status) -->
             <template v-if="placements.length > 0">
                 <template v-for="placement in placements" :key="placement.placement_id">
-                    <div class="grid grid-cols-5 border-t border-stroke px-4 py-4.5 dark:border-strokedark sm:grid-cols-7 md:px-6 2xl:px-7.5">
+                    <div
+                        class="grid grid-cols-5 border-t border-stroke px-4 py-4.5 dark:border-strokedark sm:grid-cols-7 md:px-6 2xl:px-7.5">
                         <div class="col-span-3 flex items-center">
                             <p class="text-sm font-medium text-black dark:text-white">
                                 {{ placement.placement_name }}
                             </p>
                         </div>
                         <div class="col-span-1 flex items-center">
-                            <p class="text-sm font-medium text-green-500">{{ placement.available_count }}</p>
+                            <p class="text-sm font-medium text-green-500">{{ placement.available_countSet }}</p>
                         </div>
                         <div class="col-span-1 flex items-center">
                             <p class="text-sm font-medium text-blue-500">{{ placement.booked_count }}</p>
@@ -59,8 +84,12 @@ const placements = ref<Array<{
                         <div class="col-span-1 flex items-center">
                             <p class="text-sm font-medium text-yellow-500">{{ placement.pending_count }}</p>
                         </div>
-                        <div class="col-span-1 flex items-center gap-2">
-                            <button class="bg-blue-500 text-white px-3 py-1 rounded-md hover:bg-blue-400">View</button>
+                        <div class="col-span-1 flex items-center">
+                            <button @click="() => { navigateTostatus(placement.placement_id) }"
+                                class="bg-blue-500 text-white px-3 py-1 rounded-md hover:bg-blue-400 transition duration-200">
+                                View
+                            </button>
+
                         </div>
                     </div>
                 </template>
