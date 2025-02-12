@@ -86,7 +86,7 @@ class CinemaController extends Controller
                               WHERE bp.placement_id = cp.id 
                               AND b.status IN ('pending', 'confirmed')
                           )
-                        ) AS available_count")
+                        ) AS available_countSet")
             )
             ->where('cp.cinema_id', $cinemaId)
             ->groupBy('cp.id')
