@@ -9,14 +9,18 @@ const cinema = ref<{ id: number; cinema_name: string }>(page.props.cinema || {})
 const placements = ref<Array<{ 
     placement_id: number; 
     placement_name: string; 
-    free_count: number; 
+    available_count: number; 
     booked_count: number; 
     pending_count: number; 
 }>>(page.props.placements || []);
 </script>
 
 <template>
+  
     <DefaultLayout>
+        <pre>
+            {{ placements }}
+        </pre>
         <div class="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <h2 class="text-title-md2 font-bold text-black dark:text-white">
                 Placements in {{ cinema.cinema_name }}
@@ -47,7 +51,7 @@ const placements = ref<Array<{
                             </p>
                         </div>
                         <div class="col-span-1 flex items-center">
-                            <p class="text-sm font-medium text-green-500">{{ placement.free_count }}</p>
+                            <p class="text-sm font-medium text-green-500">{{ placement.available_count }}</p>
                         </div>
                         <div class="col-span-1 flex items-center">
                             <p class="text-sm font-medium text-blue-500">{{ placement.booked_count }}</p>
