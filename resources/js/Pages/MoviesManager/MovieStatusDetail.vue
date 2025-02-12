@@ -1,96 +1,142 @@
 <script setup lang="ts">
 import { ref } from "vue";
+import { usePage, router } from "@inertiajs/vue3";
 import DefaultLayout from "../../Layouts/DefaultLayout.vue";
 
-// Mock Data
-const placementName = "Near Toilet";
-const durations = ref([
-  { period: "01/01/2025 - 15/01/2025", status: "Invitation ว่างอยู่" },
-  { period: "15/01/2025 - 29/01/2025", status: "Shreek 5" },
-  { period: "29/01/2025 - 12/02/2025", status: "Shreek 5" },
-  { period: "12/02/2025 - 26/02/2025", status: "Shreek 5" },
-  { period: "26/02/2025 - 12/03/2025", status: "Invitation" },
-  { period: "12/03/2025 - 26/03/2025", status: "Invitation" },
-  { period: "26/03/2025 - 08/04/2025", status: "Pending / Invitation" },
-  { period: "08/04/2025 - 23/04/2025", status: "Pending / Invitation" },
-  { period: "23/04/2025 - 07/05/2025", status: "Pending / Invitation" },
-]);
 
-// Mock Action Function
-const handleAction = (duration: string) => {
-  alert(`Action clicked for: ${duration}`);
+interface Durations {
+  duration_id:number;
+  start_date: string;
+  delivery_date: string;
+  status: string;
+  movie_name: string | null;
+}
+
+type Placements = {
+  placement_id: string;
+  placement_name: string;
+
+}
+
+// Get Placement & Durations
+const page = usePage();
+const placement = ref<Placements[]>(page.props.placement);
+const durations = ref<Durations[]>(page.props.durations);
+const statusFilter = ref(page.props.statusFilter || "all");
+
+// Filter Change Handler
+const updateFilter = (status: string) => {
+  router.get(`/bookings/placements/status/${placement.value.placement_id}`, { status });
 };
+
+// Confirm Booking
+const confirmBooking = (durationId: number) => {
+  alert(`Confirming booking for duration ID: ${durationId}`);
+};
+
+// Decline Booking
+const declineBooking = (durationId: number) => {
+  alert(`Declining booking for duration ID: ${durationId}`);
+};
+
+// Invite Function (Not Implemented)
+const inviteToBooking = (durationId: number) => {
+  alert(`Inviting for duration ID: ${durationId}`);
+};
+
+//Add function To Add 15 Date Of the Duration
+
 </script>
 
 <template>
+  <pre>
+    {{ durations }}
+  </pre>
   <DefaultLayout>
-    <!-- Header -->
     <div class="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
       <h2 class="text-title-md2 font-bold text-black dark:text-white">
-        Placement: {{ placementName }}
+        Placement: {{ placement.placement_name }}
       </h2>
       <nav>
         <ol class="flex items-center gap-2">
-          <li><a class="font-medium" href="#">Cinemas /</a></li>
-          <li class="font-medium text-primary">Placement Details</li>
+          <li>
+            <a class="font-medium" href="/">Cinemas /</a>
+          </li>
+          <li class="font-medium text-primary">Placement Status</li>
         </ol>
       </nav>
     </div>
 
+    <!-- Filter Tabs -->
+    <div class="flex mb-4">
+      <div role="tablist" class="tabs tabs-boxed">
+        <a role="tab" :class="['tab', statusFilter === 'all' ? 'tab-active' : '']" @click="updateFilter('all')">All</a>
+        <a role="tab" :class="['tab', statusFilter === 'pending' ? 'tab-active' : '']" @click="updateFilter('pending')">Pending</a>
+        <a role="tab" :class="['tab', statusFilter === 'booked' ? 'tab-active' : '']" @click="updateFilter('booked')">Booked</a>
+      </div>
+    </div>
+
     <!-- Table -->
-    <div class="rounded-sm border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark">
-      <div class="px-4 py-6 md:px-6 xl:px-7.5 flex justify-between">
-        <h4 class="text-xl font-bold text-black dark:text-white">Placement Status</h4>
-      </div>
+    <div class="overflow-x-auto w-full">
+      <table class="min-w-full border-collapse border border-gray-300">
+        <thead>
+          <tr class="bg-gray-200 text-gray-700">
+            <th class="border border-gray-300 px-6 py-3 w-1/3">Duration</th>
+            <th class="border border-gray-300 px-6 py-3 w-1/3">Status</th>
+            <th class="border border-gray-300 px-6 py-3 w-1/3">Action</th>
+          </tr>
+        </thead>
 
-      <!-- Table Header -->
-      <div class="grid grid-cols-3 border-t border-stroke px-4 py-4.5 dark:border-strokedark sm:grid-cols-4 md:px-6 2xl:px-7.5">
-        <div class="col-span-1 flex items-center">
-          <p class="font-medium">Duration</p>
-        </div>
-        <div class="col-span-1 flex items-center">
-          <p class="font-medium">Status</p>
-        </div>
-        <div class="col-span-1 flex items-center">
-          <p class="font-medium">Action</p>
-        </div>
-      </div>
+        <tbody>
+          <template v-for="(duration, index) in durations" :key="index">
+            <tr class="hover:bg-gray-100">
+              <!-- Duration -->
+              <td class="border border-gray-300 px-6 py-4 text-gray-700">
+                {{ duration.start_date }} - {{ duration.delivery_date }}
+              </td>
+              
+              <!-- Status -->
+              <td class="border border-gray-300 px-6 py-4 text-gray-700">
+                <span v-if="duration.status === 'Booked'" class="text-blue-500 font-semibold">{{ duration.status }}</span>
+                <span v-else-if="duration.status === 'Pending'" class="text-yellow-500 font-semibold">{{ duration.status }}</span>
+                <span v-else class="text-green-500 font-semibold">Available</span>
+              </td>
 
-      <!-- Table Rows -->
-      <template v-for="(duration, index) in durations" :key="index">
-        <div
-          class="grid grid-cols-3 border-t border-stroke px-4 py-4.5 dark:border-strokedark sm:grid-cols-4 md:px-6 2xl:px-7.5"
-        >
-          <!-- Duration -->
-          <div class="col-span-1 flex items-center">
-            <p class="text-sm font-medium text-black dark:text-white">
-              {{ duration.period }}
-            </p>
-          </div>
-
-          <!-- Status -->
-          <div class="col-span-1 flex items-center">
-            <p class="text-sm font-medium text-blue-500">
-              {{ duration.status }}
-            </p>
-          </div>
-
-          <!-- Action -->
-          <div class="col-span-1 flex items-center">
-            <button
-              @click="handleAction(duration.period)"
-              class="bg-blue-500 text-white px-3 py-1 rounded-md hover:bg-blue-400 transition duration-200"
-            >
-              Action
-            </button>
-          </div>
-        </div>
-      </template>
-
-      <!-- Empty State -->
-      <div v-if="durations.length === 0" class="text-center py-6 text-gray-500">
-        No durations found.
-      </div>
+              <!-- Action -->
+              <td class="border border-gray-300 px-6 py-4 text-center">
+                <button
+                  v-if="duration.status === 'Pending'"
+                  class="bg-green-500 text-white px-3 py-1 rounded-md hover:bg-green-400 mr-2"
+                  @click="confirmBooking(duration.duration_id)"
+                >
+                  Confirm
+                </button>
+                <button
+                  v-if="duration.status === 'Pending'"
+                  class="bg-red-500 text-white px-3 py-1 rounded-md hover:bg-red-400"
+                  @click="declineBooking(duration.duration_id)"
+                >
+                  Decline
+                </button>
+                <button
+                  v-if="duration.status === 'Pending'"
+                  class="bg-yellow-500 text-white px-3 mx-3 py-1 rounded-md hover:bg-red-400"
+                  
+                >
+                  Invite
+                </button>
+                <button
+                  v-if="duration.status === 'Available'"
+                  class="bg-yellow-500 text-white px-3 py-1 rounded-md hover:bg-yellow-400"
+                  @click="inviteToBooking(duration.duration_id)"
+                >
+                  Invite
+                </button>
+              </td>
+            </tr>
+          </template>
+        </tbody>
+      </table>
     </div>
   </DefaultLayout>
 </template>
