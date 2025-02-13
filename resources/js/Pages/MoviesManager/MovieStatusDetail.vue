@@ -49,9 +49,7 @@ const inviteToBooking = (durationId: number) => {
 </script>
 
 <template>
-  <pre>
-    {{ durations }}
-  </pre>
+  {{ durations }}
   <DefaultLayout>
     <div class="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
       <h2 class="text-title-md2 font-bold text-black dark:text-white">
@@ -72,7 +70,7 @@ const inviteToBooking = (durationId: number) => {
       <div role="tablist" class="tabs tabs-boxed">
         <a role="tab" :class="['tab', statusFilter === 'all' ? 'tab-active' : '']" @click="updateFilter('all')">All</a>
         <a role="tab" :class="['tab', statusFilter === 'pending' ? 'tab-active' : '']" @click="updateFilter('pending')">Pending</a>
-        <a role="tab" :class="['tab', statusFilter === 'booked' ? 'tab-active' : '']" @click="updateFilter('booked')">Booked</a>
+        <a role="tab" :class="['tab', statusFilter === 'aceepted' ? 'tab-active' : '']" @click="updateFilter('accepted')">Aceepted</a>
       </div>
     </div>
 
@@ -97,7 +95,7 @@ const inviteToBooking = (durationId: number) => {
               
               <!-- Status -->
               <td class="border border-gray-300 px-6 py-4 text-gray-700">
-                <span v-if="duration.status === 'Booked'" class="text-blue-500 font-semibold">{{ duration.status }}</span>
+                <span v-if="duration.status === 'Accepted'" class="text-blue-500 font-semibold">{{ duration.status }} ({{ duration.movie_name }}) </span>
                 <span v-else-if="duration.status === 'Pending'" class="text-yellow-500 font-semibold">{{ duration.status }}</span>
                 <span v-else class="text-green-500 font-semibold">Available</span>
               </td>
@@ -110,13 +108,6 @@ const inviteToBooking = (durationId: number) => {
                   @click="confirmBooking(duration.duration_id)"
                 >
                   Confirm
-                </button>
-                <button
-                  v-if="duration.status === 'Pending'"
-                  class="bg-red-500 text-white px-3 py-1 rounded-md hover:bg-red-400"
-                  @click="declineBooking(duration.duration_id)"
-                >
-                  Decline
                 </button>
                 <button
                   v-if="duration.status === 'Pending'"

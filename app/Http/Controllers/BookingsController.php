@@ -47,10 +47,73 @@ class BookingsController extends Controller
     }
 
     //Get placement each placement status and duration
+    // public function getPlcementStatus($id, Request $request)
+    // {
+    //     $statusFilter = $request->query('status', 'all');
+    //     // Get Placement Details
+    //     $placement = DB::table('cinema_placements as cp')
+    //         ->where('cp.id', $id)
+    //         ->first(['cp.id as placement_id', 'cp.placement_name']);
+
+    //     if (!$placement) {
+    //         return redirect()->route('dashboard')->with('error', 'Placement not found');
+    //     }
+
+    //     // Fetch All Durations
+    //     $durationsQuery = DB::table('durations as d')
+    //     ->select(
+    //         'd.id as duration_id',
+    //         'd.start_date',
+    //         'd.delivery_date',
+    //         DB::raw("
+    //             CASE 
+    //                 WHEN EXISTS (
+    //                     SELECT 1 
+    //                     FROM bookings_detail bd
+    //                     JOIN bookings b ON bd.booking_id = b.id
+    //                     WHERE bd.placement_id = ? 
+    //                     AND bd.duration_id = d.id
+    //                     AND b.status = 'accepted'
+    //                 ) THEN 'Accepted'
+
+    //                 WHEN EXISTS (
+    //                     SELECT 1 
+    //                     FROM bookings_detail bd
+    //                     JOIN bookings b ON bd.booking_id = b.id
+    //                     WHERE bd.placement_id = ? 
+    //                     AND bd.duration_id = d.id
+    //                     AND b.status = 'pending'
+    //                 ) THEN 'Pending'
+
+    //                 ELSE 'Available'
+    //             END AS status"
+    //         ),
+    //         DB::raw("(SELECT movies.movies_name 
+    //                   FROM movies 
+    //                   JOIN bookings b ON movies.id = b.movie_id 
+    //                   JOIN bookings_detail bd ON b.id = bd.booking_id 
+    //                   WHERE bd.duration_id = d.id 
+    //                   LIMIT 1) AS movie_name")
+    //     )
+    //     ->setBindings([$id, $id]);
+    //     if ($statusFilter !== 'all') {
+    //         $durationsQuery->having('status', '=', ucfirst($statusFilter));
+    //     }
+    //     $durations = $durationsQuery->get();
+    //     return Inertia::render(
+    //         'MoviesManager/MovieStatusDetail',
+    //         [
+    //             'placement' => $placement,
+    //             'durations' => $durations,
+    //             'statusFilter' => $statusFilter
+    //         ]
+    //     );
+    // }
     public function getPlcementStatus($id, Request $request)
     {
         $statusFilter = $request->query('status', 'all');
-        // Get Placement Details
+
+        // ✅ Get Placement Details
         $placement = DB::table('cinema_placements as cp')
             ->where('cp.id', $id)
             ->first(['cp.id as placement_id', 'cp.placement_name']);
@@ -59,66 +122,55 @@ class BookingsController extends Controller
             return redirect()->route('dashboard')->with('error', 'Placement not found');
         }
 
-        // Fetch All Durations
+        // ✅ Fetch All Durations with **Multiple** Booking Status
         $durationsQuery = DB::table('durations as d')
-        ->select(
-            'd.id as duration_id',
-            'd.start_date',
-            'd.delivery_date',
-            DB::raw("
-                CASE 
-                    WHEN EXISTS (
-                        SELECT 1 
-                        FROM bookings_detail bd
-                        JOIN bookings b ON bd.booking_id = b.id
-                        WHERE bd.placement_id = ? 
-                        AND bd.duration_id = d.id
-                        AND b.status = 'confirmed'
-                    ) THEN 'Booked'
+            ->select(
+                'd.id as duration_id',
+                'd.start_date',
+                'd.delivery_date',
 
-                    WHEN EXISTS (
-                        SELECT 1 
-                        FROM bookings_detail bd
-                        JOIN bookings b ON bd.booking_id = b.id
-                        WHERE bd.placement_id = ? 
-                        AND bd.duration_id = d.id
-                        AND b.status = 'pending'
-                    ) THEN 'Pending'
+                // ✅ Show all movies competing for this placement & duration
+                DB::raw("(SELECT GROUP_CONCAT(m.movies_name ORDER BY b.status DESC SEPARATOR ', ') 
+                          FROM movies m
+                          JOIN bookings b ON m.id = b.movie_id 
+                          JOIN bookings_detail bd ON b.id = bd.booking_id 
+                          WHERE bd.placement_id = ? 
+                          AND bd.duration_id = d.id) AS movies_competing"),
 
-                    ELSE 'Available'
-                END AS status"
-            ),
-            DB::raw("(SELECT movies.movies_name 
-                      FROM movies 
-                      JOIN bookings b ON movies.id = b.movie_id 
-                      JOIN bookings_detail bd ON b.id = bd.booking_id 
-                      WHERE bd.duration_id = d.id 
-                      LIMIT 1) AS movie_name")
-        )
-        ->setBindings([$id, $id]);
-
-        // Attach Movie Names for Booked Durations
-        // foreach ($durations as $duration) {
-        //     if ($duration->status === 'Booked') {
-        //         $movie = DB::table('bookings as b')
-        //             ->join('movies as m', 'b.movie_id', '=', 'm.id')
-        //             ->join('booking_durations as bd', 'b.id', '=', 'bd.booking_id')
-        //             ->join('booking_placements as bp', 'b.id', '=', 'bp.booking_id')
-        //             ->where('bp.placement_id', $id)
-        //             ->where('bd.duration_id', $duration->duration_id)
-        //             ->where('b.status', 'confirmed')
-        //             ->select('m.movies_name')
-        //             ->first();
-
-        //         $duration->movie_name = $movie->movies_name ?? null;
-        //     }
-        // }
+                // ✅ Correct booking status, showing if **any movie is booked**
+                DB::raw(
+                    "
+                    CASE 
+                        WHEN EXISTS (
+                            SELECT 1 
+                            FROM bookings_detail bd
+                            JOIN bookings b ON bd.booking_id = b.id
+                            WHERE bd.placement_id = ? 
+                            AND bd.duration_id = d.id
+                            AND b.status = 'accepted'
+                        ) THEN 'Accepted'
+    
+                        WHEN EXISTS (
+                            SELECT 1 
+                            FROM bookings_detail bd
+                            JOIN bookings b ON bd.booking_id = b.id
+                            WHERE bd.placement_id = ? 
+                            AND bd.duration_id = d.id
+                            AND b.status = 'pending'
+                        ) THEN 'Pending'
+    
+                        ELSE 'Available'
+                    END AS status"
+                )
+            )
+            ->setBindings([$id, $id, $id]);
 
         if ($statusFilter !== 'all') {
             $durationsQuery->having('status', '=', ucfirst($statusFilter));
         }
 
         $durations = $durationsQuery->get();
+
         return Inertia::render(
             'MoviesManager/MovieStatusDetail',
             [

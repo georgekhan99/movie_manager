@@ -261,7 +261,7 @@ const HandleDeleteMovie = async (id) => {
                     </a>
                     <a
                         class="hover:text-primary relative group mx-1"
-                        @click="HandleDeleteMovie(movie.id)"
+                        :href="`/distributor/bookings/${movie.id}`"
                     >
                     Booking
                     </a>
