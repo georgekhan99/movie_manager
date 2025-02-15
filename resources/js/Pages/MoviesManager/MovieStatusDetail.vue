@@ -3,53 +3,86 @@ import { ref } from "vue";
 import { usePage, router } from "@inertiajs/vue3";
 import DefaultLayout from "../../Layouts/DefaultLayout.vue";
 
-
-interface Durations {
-  duration_id:number;
+// Define Interfaces
+interface Duration {
+  duration_id: number;
   start_date: string;
   delivery_date: string;
   status: string;
-  movie_name: string | null;
+  movies_competing: string | null; // All movies competing for this slot
 }
 
-type Placements = {
-  placement_id: string;
+interface Placement {
+  placement_id: number;
   placement_name: string;
-
 }
 
-// Get Placement & Durations
+// Get Inertia Props
 const page = usePage();
-const placement = ref<Placements[]>(page.props.placement);
-const durations = ref<Durations[]>(page.props.durations);
-const statusFilter = ref(page.props.statusFilter || "all");
+const placement = ref<Placement>(page.props.placement);
+const durations = ref<Duration[]>(page.props.durations);
+const statusFilter = ref<string>(page.props.statusFilter || "all");
 
-// Filter Change Handler
+// State for modal confirmation
+const showModal = ref(false);
+const selectedDurationId = ref<number | null>(null);
+const selectedMovie = ref<string | null>(null);
+const competingMovies = ref<string[]>([]);
+
+// Function to update filter via Inertia
 const updateFilter = (status: string) => {
   router.get(`/bookings/placements/status/${placement.value.placement_id}`, { status });
 };
 
-// Confirm Booking
-const confirmBooking = (durationId: number) => {
-  alert(`Confirming booking for duration ID: ${durationId}`);
+// Open confirmation modal
+const openConfirmModal = (duration: Duration) => {
+  selectedDurationId.value = duration.duration_id;
+
+  // ✅ Convert string into an array (fix for .join issue) duration.movies_competing.split(",")
+  competingMovies.value = duration.movies_competing ?  JSON.parse(duration.movies_competing) : [];
+
+  showModal.value = true;
 };
 
-// Decline Booking
-const declineBooking = (durationId: number) => {
-  alert(`Declining booking for duration ID: ${durationId}`);
+// Confirm booking and cancel others
+const confirmBooking = () => {
+  if (!selectedDurationId.value || !selectedMovie.value) {
+    alert("Please select a movie.");
+    return;
+  }
+
+  console.log(selectedMovie.value);
+
+  router.post(`/bookings/placements/confirm`, {
+    placement_id: placement.value.placement_id,
+    duration_id: selectedDurationId.value,
+    selected_movie: selectedMovie.value,
+  }, {
+    onSuccess: () => {
+      alert("Booking confirmed successfully! Competing bookings have been canceled.");
+      showModal.value = false;
+      router.reload();
+    },
+    onError: (error) => alert("Error: " + error)
+  });
 };
 
-// Invite Function (Not Implemented)
-const inviteToBooking = (durationId: number) => {
-  alert(`Inviting for duration ID: ${durationId}`);
-};
-
-//Add function To Add 15 Date Of the Duration
-
+// Invite a new movie to book the slot
+// const inviteToBooking = (durationId: number) => {
+//   router.post(`/bookings/placements/invite`, { 
+//     placement_id: placement.value.placement_id, 
+//     duration_id: durationId 
+//   }, {
+//     onSuccess: () => alert("Invitation sent successfully!"),
+//     onError: (error) => alert("Error: " + error)
+//   });
+// };
 </script>
 
 <template>
+<pre>
   {{ durations }}
+</pre>
   <DefaultLayout>
     <div class="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
       <h2 class="text-title-md2 font-bold text-black dark:text-white">
@@ -70,7 +103,7 @@ const inviteToBooking = (durationId: number) => {
       <div role="tablist" class="tabs tabs-boxed">
         <a role="tab" :class="['tab', statusFilter === 'all' ? 'tab-active' : '']" @click="updateFilter('all')">All</a>
         <a role="tab" :class="['tab', statusFilter === 'pending' ? 'tab-active' : '']" @click="updateFilter('pending')">Pending</a>
-        <a role="tab" :class="['tab', statusFilter === 'aceepted' ? 'tab-active' : '']" @click="updateFilter('accepted')">Aceepted</a>
+        <a role="tab" :class="['tab', statusFilter === 'accepted' ? 'tab-active' : '']" @click="updateFilter('accepted')">Accepted</a>
       </div>
     </div>
 
@@ -95,9 +128,15 @@ const inviteToBooking = (durationId: number) => {
               
               <!-- Status -->
               <td class="border border-gray-300 px-6 py-4 text-gray-700">
-                <span v-if="duration.status === 'Accepted'" class="text-blue-500 font-semibold">{{ duration.status }} ({{ duration.movie_name }}) </span>
-                <span v-else-if="duration.status === 'Pending'" class="text-yellow-500 font-semibold">{{ duration.status }}</span>
-                <span v-else class="text-green-500 font-semibold">Available</span>
+                <span v-if="duration.status.split(':')[0] === 'Accepted'" class="text-blue-500 font-semibold">
+                  {{ duration.status }} 
+                </span>
+               
+               <span v-else-if="duration.status === 'Pending'" class="text-yellow-500 font-semibold">
+                  {{ duration.status }} 
+                
+                </span>
+                <span v-else class="text-green-500 font-semibold">Available</span> 
               </td>
 
               <!-- Action -->
@@ -105,16 +144,9 @@ const inviteToBooking = (durationId: number) => {
                 <button
                   v-if="duration.status === 'Pending'"
                   class="bg-green-500 text-white px-3 py-1 rounded-md hover:bg-green-400 mr-2"
-                  @click="confirmBooking(duration.duration_id)"
+                  @click="openConfirmModal(duration)"
                 >
                   Confirm
-                </button>
-                <button
-                  v-if="duration.status === 'Pending'"
-                  class="bg-yellow-500 text-white px-3 mx-3 py-1 rounded-md hover:bg-red-400"
-                  
-                >
-                  Invite
                 </button>
                 <button
                   v-if="duration.status === 'Available'"
@@ -128,6 +160,26 @@ const inviteToBooking = (durationId: number) => {
           </template>
         </tbody>
       </table>
+    </div>
+
+    <!-- Confirmation Modal -->
+    <div v-if="showModal" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center">
+      <div class="bg-white p-6 rounded-md shadow-md w-96">
+        <h2 class="text-lg font-semibold mb-4">Select a Movie</h2>
+        <select v-model="selectedMovie" class="w-full p-2 border rounded-md">
+          <option v-for="movie in competingMovies" :key="movie" :value="movie.id">
+            {{ movie.movie_name }} 
+          </option>
+        </select>
+        <div class="flex justify-end mt-4">
+          <button class="bg-green-500 text-white px-4 py-2 rounded-md mr-2" @click="confirmBooking">
+            Confirm
+          </button>
+          <button class="bg-gray-400 text-white px-4 py-2 rounded-md" @click="showModal = false">
+            Cancel
+          </button>
+        </div>
+      </div>
     </div>
   </DefaultLayout>
 </template>

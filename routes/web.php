@@ -87,7 +87,7 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified',
     Route::get('/bookings/placements/status/{id}', [App\Http\Controllers\BookingsController::class, 'getPlcementStatus'])->name('bookings.placement.status');
     Route::get('bookings/manager/distributor', [App\Http\Controllers\BookingsController::class, 'getBookingManagerPageload'])->name('bookigs.pageload');
     Route::post('/bookings/create', [App\Http\Controllers\BookingsController::class, 'createBookings'])->name('bookigs.create');
-
+    Route::post('/bookings/placements/confirm', [App\Http\Controllers\BookingsController::class, 'confirmBookings'])->name('confirm.bookings');
 });
 
 

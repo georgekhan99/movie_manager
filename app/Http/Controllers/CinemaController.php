@@ -38,60 +38,53 @@ class CinemaController extends Controller
 
     public function getCinemaBookingDetailPageload($cinemaId)
     {
+        // Get Cinema Details
         $cinema = DB::table('cinemas')
             ->where('id', $cinemaId)
             ->first(['id', 'cinema_name']);
-
+    
         if (!$cinema) {
             return redirect()->route('dashboard')->with('error', 'Cinema not found');
         }
-
+    
+        // Fetch all placements for this cinema
         $placements = DB::table('cinema_placements as cp')
             ->select(
                 'cp.id as placement_id',
                 'cp.placement_name',
-
-                // ✅ Total durations (All available time slots)
+    
+                // ✅ Total available durations for each placement
                 DB::raw("(SELECT COUNT(*) FROM durations) AS total_durations"),
-
-                // ✅ Correct Booked count
-                // DB::raw("(SELECT COUNT(DISTINCT bd.duration_id) 
-                //           FROM bookings_detail bd
-                //           JOIN bookings b ON bd.booking_id = b.id
-                //           JOIN booking_detail bp ON b.id = bp.booking_id
-                //           WHERE bp.placement_id = cp.id 
-                //           AND b.status = 'confirmed') AS booked_count"),
-
+    
+                // ✅ Count of **Booked** placements per duration
                 DB::raw("(SELECT COUNT(DISTINCT bd.duration_id) 
-                FROM bookings_detail bd
-                JOIN bookings b ON bd.booking_id = b.id
-                WHERE bd.placement_id = cp.id 
-                AND b.status = 'accepted') AS booked_count"),
-
-
-                // ✅ Correct Pending count
+                          FROM bookings_detail bd
+                          JOIN bookings b ON bd.booking_id = b.id
+                          WHERE bd.placement_id = cp.id 
+                          AND b.status = 'accepted') AS booked_count"),
+    
+                // ✅ Count of **Pending** placements per duration
                 DB::raw("(SELECT COUNT(DISTINCT bd.duration_id) 
                           FROM bookings_detail bd
                           JOIN bookings b ON bd.booking_id = b.id
                           WHERE bd.placement_id = cp.id 
                           AND b.status = 'pending') AS pending_count"),
-
-                // ✅ Correct Free count (Available Placements)
+    
+                // ✅ Correctly calculate **Available** placements per duration
                 DB::raw("(SELECT COUNT(*) FROM durations d
                           WHERE d.id NOT IN (
-                              SELECT bd.duration_id
-                              FROM booking_durations bd
+                              SELECT DISTINCT bd.duration_id
+                              FROM bookings_detail bd
                               JOIN bookings b ON bd.booking_id = b.id
-                              JOIN booking_placements bp ON b.id = bp.booking_id
-                              WHERE bp.placement_id = cp.id 
-                              AND b.status IN ('pending', 'confirmed')
+                              WHERE bd.placement_id = cp.id 
+                              AND b.status IN ('pending', 'accepted')
                           )
-                        ) AS available_countSet")
+                        ) AS available_count")
             )
             ->where('cp.cinema_id', $cinemaId)
             ->groupBy('cp.id')
             ->get();
-
+    
         return Inertia::render('MoviesManager/CinemaBookingDetail', [
             'cinema' => $cinema,
             'placements' => $placements,
