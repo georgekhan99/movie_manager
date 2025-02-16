@@ -11,8 +11,10 @@ class bookings_detail extends Model
     protected $table = 'bookings_detail';
     public $timestamps = false;
     protected $fillable = [
+        'id',
         'booking_id',
         'placement_id',
-        'duration_id'
+        'duration_id',
+        'booking_status'
     ];
 }

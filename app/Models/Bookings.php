@@ -12,7 +12,6 @@ class Bookings extends Model
     protected $fillable = [
         'movie_id',
         'user_id',
-        'status'
     ];
 
     public function placements() {

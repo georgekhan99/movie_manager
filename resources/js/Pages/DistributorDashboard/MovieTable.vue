@@ -155,10 +155,14 @@ const HandleDeleteMovie = async (id) => {
         <div
             class="rounded-sm border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark"
         >
-            <div class="py-6 px-4 md:px-6 xl:px-7.5">
+            <div class="py-6 px-4 md:px-6 xl:px-7.5 flex justify-between">
                 <h4 class="text-xl font-bold text-black dark:text-white">
                     Movie Management
                 </h4>
+
+                <a href="/bookings/manager/distributor" class="inline-block bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition duration-300 text-sm font-medium shadow-md">
+                View Booking Detail
+                </a>
             </div>
 
             <!-- Table Header -->
@@ -265,7 +269,6 @@ const HandleDeleteMovie = async (id) => {
                     >
                     Booking
                     </a>
-                    <!-- Confirmation Modal -->
                 </div>
             </div>
         </div>

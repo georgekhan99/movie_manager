@@ -23,6 +23,7 @@
         "@vueuse/core": "^12.0.0",
         "dayjs": "^1.11.13",
         "pinia": "^2.3.0",
-        "vee-validate": "^4.14.7"
+        "vee-validate": "^4.14.7",
+        "vue3-toastify": "^0.2.8"
     }
 }
