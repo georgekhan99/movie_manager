@@ -157,6 +157,24 @@ const CloseChangMovieModal = () => {
           Submit
         </button>
       </div>
+      <div class="flex justify-between mb-5">
+          <div class="w-full flex">
+            <div class="w-4/12">
+              <h2 class="text-2xl font-bold">Movie Name: {{ Movie_details.movies_name }}</h2>
+            </div>
+            <div class="w-4/12 flex justify-center">
+              <div class="flex items-center mt-2">
+                <h2 class="text-2xl font-bold"> Cinemas: </h2>
+                <select class="input-style input-style h-4 w-full" name="" id="">
+                  <option value=""> Test2 </option>
+                </select>
+              </div>
+            </div>
+            <div class="w-4/12 flex justify-end font-bold">
+              <h3 class="text-2xl"> Release Date: {{ Movie_details.movies_release_date }} </h3>
+            </div>
+          </div>
+        </div>
 
       <div v-if="successMessage" class="bg-green-200 text-green-700 p-3 rounded-md mb-4">
         {{ successMessage }}
