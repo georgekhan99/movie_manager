@@ -123,14 +123,29 @@ const getPlacementDurations = computed(() => {
           durations: [durationInfo],
         });
       }
+      console.log(acc);
       return acc;
     }, [] as any[])
   }));
 });
 
+const isMovieChangeOpen = ref<boolean>(false);
+
+const OpenChangMovieModal = (info) => {
+  console.log(info)
+  isMovieChangeOpen.value = true;
+ 
+}
+const CloseChangMovieModal = () => {
+  isMovieChangeOpen.value = false;
+}
 </script>
 
 <template>
+  <pre>
+    {{ PlacementList }}
+    
+  </pre>
   <DefaultLayout title="Cinema List">
     <div class="p-6 bg-white rounded shadow-md">
       <div class="flex justify-between mb-6">
@@ -200,9 +215,9 @@ const getPlacementDurations = computed(() => {
                       {{ placement.durations.find(d => d.duration_id === duration.id)?.accepted_movie }}
                     </span>
                     <span
-                     
+                     @click="OpenChangMovieModal(placement)"
                       v-else-if="placement.durations.some(d => d.duration_id === duration.id && !d.is_confirmed)"
-                      class="bg-yellow-400 text-black px-2 py-1 rounded-md text-xs font-bold">
+                      class="bg-yellow-400 text-black px-2 py-1 rounded-md text-xs font-bold cursor-pointer">
                       Pending
                     </span>
                     <div v-else class="flex items-center justify-center space-x-2">
@@ -219,6 +234,20 @@ const getPlacementDurations = computed(() => {
             </template>
           </tbody>
         </table>
+      </div>
+      <!-- Change Movie Modal -->
+      <div v-if="isMovieChangeOpen" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 transition ">
+        <div class="bg-white w-96 rounded-lg shadow-lg p-6">
+          <h2 class="text-xl font-semibold mb-4">Select a Movie</h2>
+          
+          <div class="space-y-2 max-h-60 overflow-y-auto">
+  
+          </div>
+
+          <div class="mt-4 flex justify-end space-x-2">
+            <button @click="CloseChangMovieModal" class="px-4 py-2 bg-gray-300 rounded-lg">Cancel</button>
+          </div>
+        </div>
       </div>
     </div>
   </DefaultLayout>
