@@ -142,10 +142,6 @@ const CloseChangMovieModal = () => {
 </script>
 
 <template>
-  <pre>
-    {{ PlacementList }}
-    
-  </pre>
   <DefaultLayout title="Cinema List">
     <div class="p-6 bg-white rounded shadow-md">
       <div class="flex justify-between mb-6">
@@ -229,8 +225,19 @@ const CloseChangMovieModal = () => {
                   <td v-for="duration in durations" :key="duration.id" class="border border-gray-300 px-4 py-3 text-center">
                     <span
                       v-if="placement.durations.some(d => d.duration_id === duration.id && d.is_confirmed)"
+                      :class="placement.durations.find(d => d.duration_id === duration.id)?.accepted_movie === 'N/A'
+                      ?
+                      'bg-slate-500 text-white px-2 py-1 rounded-md text-xs font-bold'
+                      :'bg-green-500 text-white px-2 py-1 rounded-md text-xs font-bold'
+                      ">
+                      {{ placement.durations.find(d => d.duration_id === duration.id)?.accepted_movie }} 
+                    </span>
+                    
+                    <span
+                      v-else-if="placement.durations.some(d => d.duration_id === duration.id && d.is_confirmed) === 'N/A' "
                       class="bg-green-500 text-white px-2 py-1 rounded-md text-xs font-bold">
-                      {{ placement.durations.find(d => d.duration_id === duration.id)?.accepted_movie }}
+                      {{ placement.durations.find(d => d.duration_id === duration.id)?.accepted_movie }} 
+                     
                     </span>
                     <span
                      @click="OpenChangMovieModal(placement)"
