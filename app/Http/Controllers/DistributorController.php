@@ -79,7 +79,7 @@ class DistributorController extends Controller
             ]
         );
     }
-
+#region ExistingCode to  get booking calendar
     // public function BookingCalendar($id) {
     //     // Get Movie Details
     //     $MovieReleaseDate = movies::findOrFail($id, ['id', 'movies_name', 'movies_release_date']);
@@ -274,7 +274,7 @@ class DistributorController extends Controller
 //         'Movie_details' => $MovieReleaseDate
 //     ]);
 // }
-
+#endregion
 public function BookingCalendar($id)
 {
     // Get authenticated user
@@ -340,23 +340,31 @@ public function BookingCalendar($id)
     $previousDurations = Duration::where('start_date', '<', $releaseDate->start_date)
         ->orderBy('start_date', 'desc')
         ->limit(4)
-        ->get(['id', 'start_date'])->reverse();
+        ->get(['id', 'start_date', 'production_deadline'])->reverse();
 
     // Fetch Next 3 Durations
     $nextDurations = Duration::where('start_date', '>', $releaseDate->start_date)
         ->orderBy('start_date', 'asc')
         ->limit(3)
-        ->get(['id', 'start_date']);
+        ->get(['id', 'start_date', 'production_deadline']);
 
     $durations = $previousDurations->merge([$releaseDate])->merge($nextDurations);
+
+    $userMovies = movies::where('company_id', $userCompanyId)->get(['id', 'movies_name']);
+
+    
+
+
 
     return Inertia::render('DistributorDashboard/BookingCalendar', [
         'releaseDate' => $releaseDate,
         'PlacementList' => $placementList,
         'durations' => $durations,
-        'Movie_details' => $MovieReleaseDate
+        'Movie_details' => $MovieReleaseDate,
+        'userMovie' =>  $userMovies
     ]);
 }
+
 
 
     

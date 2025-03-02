@@ -10,6 +10,7 @@ const durations = ref<{ id: number; start_date: string }[]>(page.props.durations
 
 defineProps<{
   Movie_details: { id: number; movies_name: string; movies_release_date: string };
+  userMovie: {id: number; movies_name: string};
   PlacementList: Array<{ 
     cinema_name: string;
     placements: { 
@@ -195,7 +196,7 @@ const CloseChangMovieModal = () => {
             <tr class="bg-gray-100">
               <td colspan="3" class="border border-gray-300  font-bold text-center">Deadline</td>
               <td v-for="(duration, index) in durations" :key="duration.id" class="border border-gray-300 py-3 text-center font-bold text-red-500">
-                  {{ duration.start_date }}
+                  {{ duration.production_deadline }}
               </td>
             </tr>
             <template v-for="(cinema, index) in getPlacementDurations" :key="cinema.cinema_name">
@@ -266,10 +267,14 @@ const CloseChangMovieModal = () => {
           <h2 class="text-xl font-semibold mb-4">Select a Movie</h2>
           
           <div class="space-y-2 max-h-60 overflow-y-auto">
-  
+            <select class="input-style" name="usermovie" id="user-movie">
+              <option> Select Movie </option>
+              <option value="" v-for="movie in userMovie" >{{ movie.movies_name }}</option>
+            </select>
           </div>
 
           <div class="mt-4 flex justify-end space-x-2">
+            <button @click="(()=> isMovieChangeOpen.value = false)" class="px-4 py-2 bg-green-300 rounded-lg"> Submit </button>
             <button @click="CloseChangMovieModal" class="px-4 py-2 bg-gray-300 rounded-lg">Cancel</button>
           </div>
         </div>
