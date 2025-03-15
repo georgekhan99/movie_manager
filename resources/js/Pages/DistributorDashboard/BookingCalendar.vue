@@ -159,10 +159,15 @@ function formatDateShort(dateString) {
   return date.toLocaleDateString("en-GB", { day: "2-digit", month: "2-digit" });
 }
 
-const calculateGraceDate = (startDate: string): string => {
-    const date = new Date(startDate);
-    return dayjs(startDate).subtract(35, 'day').format('YYYY-MM-DD');
+// const calculateGraceDate = (startDate: string): string => {
+//     const date = new Date(startDate);
+//     return dayjs(startDate).subtract(35, 'day').format('YYYY-MM-DD');
+// };
+const calculateGraceDate = (releaseDate: string): string => {
+    return dayjs(releaseDate).subtract(35, 'day').format('YYYY-MM-DD');
 };
+
+
 
   </script>
   <template>
@@ -251,19 +256,24 @@ const calculateGraceDate = (startDate: string): string => {
               <td v-for="duration in durations" :key="duration.id" 
                 class="border border-gray-300 px-4 py-3 text-center"
                 :class="{
-                  'bg-[#c8c8c8] text-black': placement.durations.some(d => d.duration_id === duration.id && d.accepted_movie === 'N/A'),   // N/A - Grey
-                  'bg-green-500 text-black': placement.durations.some(d => d.duration_id === duration.id && d.is_confirmed && d.accepted_movie !== 'N/A'),  // Confirmed - Green
-                  'bg-yellow-200 text-black cursor-pointer': placement.durations.some(d => d.duration_id === duration.id && !d.is_confirmed), // Pending - Yellow & Clickable
-                  'bg-green-300 text-black': placement.durations.some(d => d.duration_id === duration.id && d.is_confirmed) &&
-                  calculateGraceDate(duration.start_date) !== duration.start_date, // Light Green if not grace date
-                }"
+                    'bg-[#c8c8c8] text-black': placement.durations.some(d => d.duration_id === duration.id && d.accepted_movie === 'N/A'), // N/A - Grey
+
+                    'bg-green-500 text-white': placement.durations.some(d => d.duration_id === duration.id && d.is_confirmed && d.accepted_movie !== 'N/A') &&
+                                              new Date(calculateGraceDate(Movie_details.movies_release_date)) > new Date(duration.start_date), // Light Green if BEFORE grace date
+
+                    'bg-orange-400 text-white': placement.durations.some(d => d.duration_id === duration.id && d.is_confirmed && d.accepted_movie !== 'N/A') &&
+                                              new Date(calculateGraceDate(Movie_details.movies_release_date)) <= new Date(duration.start_date), // Orange if AFTER grace date
+
+                    'bg-yellow-200 text-black cursor-pointer': placement.durations.some(d => d.duration_id === duration.id && !d.is_confirmed), // Pending - Yellow & Clickable
+                  }"
                 @click="placement.durations.some(d => d.duration_id === duration.id && !d.is_confirmed) ? OpenChangMovieModal(placement) : null"
               >
                 <template v-if="placement.durations.some(d => d.duration_id === duration.id && d.accepted_movie === 'N/A')">
                 {{ placement.durations.some(d => d.duration_id === duration.id && !d.is_confirmed) ? "Pending" : "N/A" }}
                 </template>
                 <template v-else-if="placement.durations.some(d => d.duration_id === duration.id && d.is_confirmed)">
-                  {{ placement.durations.find(d => d.duration_id === duration.id)?.accepted_movie || 'Confirmed' }}
+                  {{ placement.durations.find(d => d.duration_id === duration.id)?.accepted_movie || 'Confirmed' }} 
+
                 </template>
                 <template v-else>
                   <div class="flex items-center justify-center space-x-2">
