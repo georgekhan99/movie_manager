@@ -40,19 +40,19 @@
   };
   
   // Function to add/remove selections
-  const toggleBooking = (placementId: number, durationId: number, isConfirmed: number) => {
-    if (isConfirmed) return; // Prevent selection if already confirmed
+  // const toggleBooking = (placementId: number, durationId: number, isConfirmed: number) => {
+  //   if (isConfirmed) return; // Prevent selection if already confirmed
   
-    const index = selectedBookings.value.findIndex(
-      (b) => b.placementId === placementId && b.durationId === durationId
-    );
+  //   const index = selectedBookings.value.findIndex(
+  //     (b) => b.placementId === placementId && b.durationId === durationId
+  //   );
   
-    if (index === -1) {
-      selectedBookings.value.push({ placementId, durationId });
-    } else {
-      selectedBookings.value.splice(index, 1);
-    }
-  };
+  //   if (index === -1) {
+  //     selectedBookings.value.push({ placementId, durationId });
+  //   } else {
+  //     selectedBookings.value.splice(index, 1);
+  //   }
+  // };
   
   // Function to submit bookings
   const submitBookings = async () => {
@@ -159,10 +159,6 @@ function formatDateShort(dateString) {
   return date.toLocaleDateString("en-GB", { day: "2-digit", month: "2-digit" });
 }
 
-// const calculateGraceDate = (startDate: string): string => {
-//     const date = new Date(startDate);
-//     return dayjs(startDate).subtract(35, 'day').format('YYYY-MM-DD');
-// };
 const calculateGraceDate = (releaseDate: string): string => {
     return dayjs(releaseDate).subtract(35, 'day').format('YYYY-MM-DD');
 };
@@ -171,6 +167,7 @@ const calculateGraceDate = (releaseDate: string): string => {
 
   </script>
   <template>
+    {{ selectedBookings }}
     <DefaultLayout title="Cinema List">
       <div class="p-6 bg-white rounded shadow-md">
         <div class="flex justify-between mb-6">
@@ -217,8 +214,7 @@ const calculateGraceDate = (releaseDate: string): string => {
               <th class="border border-gray-300 px-6 py-4 whitespace-nowrap text-center">Price</th>
               <th v-for="(duration, index) in durations" :key="duration.id" :class="index === 4 ? 'border border-grey-300 py-4 bg-[#677489] text-sm text-white' : 'border border-grey-300 bg-[#8c8c8c] text-white py-4 text-sm'">
                {{ getDateRangeWithWeeks(duration.start_date) }}
-               
-
+              
               </th>
             </tr>
             </thead>
@@ -253,6 +249,7 @@ const calculateGraceDate = (releaseDate: string): string => {
                 {{ placement.placement_price }}
               </td>             
               <!-- Duration Cells -->
+              <!-- @click="placement.durations.some(d => d.duration_id === duration.id && !d.is_confirmed) ? OpenChangMovieModal(placement) : null" -->
               <td v-for="duration in durations" :key="duration.id" 
                 class="border border-gray-300 px-4 py-3 text-center"
                 :class="{
@@ -266,12 +263,21 @@ const calculateGraceDate = (releaseDate: string): string => {
 
                     'bg-yellow-200 text-black cursor-pointer': placement.durations.some(d => d.duration_id === duration.id && !d.is_confirmed), // Pending - Yellow & Clickable
                   }"
-                @click="placement.durations.some(d => d.duration_id === duration.id && !d.is_confirmed) ? OpenChangMovieModal(placement) : null"
+                
               >
                 <template v-if="placement.durations.some(d => d.duration_id === duration.id && d.accepted_movie === 'N/A')">
-                {{ placement.durations.some(d => d.duration_id === duration.id && !d.is_confirmed) ? "Pending" : "N/A" }}
+                  <div class="flex items-center justify-center space-x-2">
+                    {{ placement.durations.some(d => d.duration_id === duration.id && !d.is_confirmed) ? "Pending" : "N/A" }}
+                    <input 
+                      v-if="placement.durations.some(d => d.duration_id === duration.id && !d.is_confirmed) === true"
+                      type="checkbox"
+                      class="w-5 h-5 ml-2"
+                      :checked="selectedBookings.some(b => b.placementId === placement.placement_id && b.durationId === duration.id)"
+                      @change="toggleBooking(placement.placement_id, duration.id, placement.durations.some(d => d.duration_id === duration.id && !d.is_confirmed))"
+                    />
+                  </div>
                 </template>
-                <template v-else-if="placement.durations.some(d => d.duration_id === duration.id && d.is_confirmed)">
+                <template  @click="OpenChangMovieModal(placement)" v-else-if="placement.durations.some(d => d.duration_id === duration.id && d.is_confirmed)">
                   {{ placement.durations.find(d => d.duration_id === duration.id)?.accepted_movie || 'Confirmed' }} 
 
                 </template>

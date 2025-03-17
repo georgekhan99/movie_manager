@@ -434,7 +434,7 @@ public function BookingCalendar($id)
     // Fetch Next 3 Durations
     $nextDurations = Duration::where('start_date', '>', $releaseDate->start_date)
         ->orderBy('start_date', 'asc')
-        ->limit(3)
+        ->limit(2)
         ->get(['id', 'start_date', 'production_deadline']);
 
     // **Fix Missing Production Deadline**
