@@ -232,34 +232,83 @@ public function confirmBookings(Request $request)
 
 
     //Create Bookings from Booking Calendar
+    // public function createBookings(Request $request)
+    // {
+    //     $validated = $request->validate([
+    //         'movie_id' => 'required|exists:movies,id',
+    //         'selected_bookings' => 'required|array',
+    //         'selected_bookings.*.placementId' => 'exists:cinema_placements,id',
+    //         'selected_bookings.*.durationId' => 'exists:durations,id'
+    //     ]);
+    //     // Create the booking
+    //     $booking = Bookings::create([
+    //         'movie_id' => $validated['movie_id'],
+    //         'user_id' => Auth::id(),
+    //         'status' => 'pending'
+    //     ]);
+    //     //start Create Bookings Details From Bookings Id.
+    //     if (!empty($booking)) {
+    //         foreach ($validated['selected_bookings'] as $selection) {
+    //             $bookings = bookings_detail::create([
+    //                 'booking_id' => $booking->id,
+    //                 'placement_id' => $selection['placementId'],
+    //                 'duration_id' => $selection['durationId']
+    //             ]);
+    //         }
+    //     }
+    //     if ($bookings) {
+    //         return response()->json(['message' => 'Booking successfully created!'], 201);
+    //     } else {
+    //         return response()->json(['message' => 'Booking Creating failed'], 500);
+    //     }
+    // }
+
     public function createBookings(Request $request)
-    {
-        $validated = $request->validate([
-            'movie_id' => 'required|exists:movies,id',
-            'selected_bookings' => 'required|array',
-            'selected_bookings.*.placementId' => 'exists:cinema_placements,id',
-            'selected_bookings.*.durationId' => 'exists:durations,id'
-        ]);
-        // Create the booking
+{
+    $validated = $request->validate([
+        'movie_id' => 'required|exists:movies,id',
+        'selected_bookings' => 'required|array',
+        'selected_bookings.*.placementId' => 'exists:cinema_placements,id',
+        'selected_bookings.*.durationId' => 'exists:durations,id',
+        'selected_bookings.*.Pending' => 'boolean' // Check if it's Pending (cancellation)
+    ]);
+
+    // Get the user ID
+    $userId = Auth::id();
+
+    // Create a booking record if there are new bookings (not cancellations)
+    if (collect($validated['selected_bookings'])->contains('Pending', 0)) {
         $booking = Bookings::create([
             'movie_id' => $validated['movie_id'],
-            'user_id' => Auth::id(),
+            'user_id' => $userId,
             'status' => 'pending'
         ]);
-        //start Create Bookings Details From Bookings Id.
-        if (!empty($booking)) {
-            foreach ($validated['selected_bookings'] as $selection) {
-                $bookings = bookings_detail::create([
-                    'booking_id' => $booking->id,
-                    'placement_id' => $selection['placementId'],
-                    'duration_id' => $selection['durationId']
-                ]);
-            }
-        }
-        if ($bookings) {
-            return response()->json(['message' => 'Booking successfully created!'], 201);
+    } else {
+        $booking = null; // No need to create a new booking if all are cancellations
+    }
+
+    // Process bookings (Create or Cancel)
+    foreach ($validated['selected_bookings'] as $selection) {
+        if ($selection['Pending'] === 0) {
+            // ✅ Create new booking details (if it's NOT Pending)
+            bookings_detail::create([
+                'booking_id' => $booking->id,
+                'placement_id' => $selection['placementId'],
+                'duration_id' => $selection['durationId']
+            ]);
         } else {
-            return response()->json(['message' => 'Booking Creating failed'], 500);
+            // ❌ Cancel existing booking if it is Pending
+            bookings_detail::where([
+                'placement_id' => $selection['placementId'],
+                'duration_id' => $selection['durationId']
+            ])->delete();
         }
     }
+
+    return response()->json([
+        'message' => 'Booking processed successfully!'
+    ], 201);
+}
+
+
 }

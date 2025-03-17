@@ -55,6 +55,30 @@
   // };
   
   // Function to submit bookings
+  
+  //Toogle The checkboxes
+
+  const toggleBooking = (placementId: number, durationId: number, isPending: boolean) => {
+  const index = selectedBookings.value.findIndex(
+    (b) => b.placementId === placementId && b.durationId === durationId
+  );
+
+  if (index === -1) {
+    // If not found, add to the list with Pending status
+    selectedBookings.value.push({ 
+      placementId, 
+      durationId, 
+      Pending: isPending 
+    });
+  } else {
+    // If found, remove it (toggle off)
+    selectedBookings.value.splice(index, 1);
+  }
+};
+  
+  
+  
+  
   const submitBookings = async () => {
     if (selectedBookings.value.length === 0) {
       alert("Please select at least one placement and duration.");
