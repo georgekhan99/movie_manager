@@ -4,6 +4,7 @@
   import { ref, computed, onMounted } from "vue";
   import axios from "axios";
   import dayjs from 'dayjs'
+  import { router } from '@inertiajs/vue3';
   // Get Inertia Props
   const page = usePage();
   const durations = ref<{ id: number; start_date: string }[]>(page.props.durations || []);
@@ -39,25 +40,6 @@
     });
   };
   
-  // Function to add/remove selections
-  // const toggleBooking = (placementId: number, durationId: number, isConfirmed: number) => {
-  //   if (isConfirmed) return; // Prevent selection if already confirmed
-  
-  //   const index = selectedBookings.value.findIndex(
-  //     (b) => b.placementId === placementId && b.durationId === durationId
-  //   );
-  
-  //   if (index === -1) {
-  //     selectedBookings.value.push({ placementId, durationId });
-  //   } else {
-  //     selectedBookings.value.splice(index, 1);
-  //   }
-  // };
-  
-  // Function to submit bookings
-  
-  //Toogle The checkboxes
-
   const toggleBooking = (placementId: number, durationId: number, isPending: boolean) => {
   const index = selectedBookings.value.findIndex(
     (b) => b.placementId === placementId && b.durationId === durationId
@@ -75,8 +57,6 @@
     selectedBookings.value.splice(index, 1);
   }
 };
-  
-  
   
   
   const submitBookings = async () => {
@@ -97,6 +77,7 @@
   
       successMessage.value = "Booking successfully created!";
       clearSelections();
+      router.reload({ only: ['PlacementList', 'durations'] });
     } catch (error) {
       errorMessage.value = error.response?.data?.error || "Booking failed.";
     } finally {
@@ -129,19 +110,48 @@
             durations: [durationInfo],
           });
         }
-        console.log(acc);
+       
         return acc;
       }, [] as any[])
     }));
   });
   
   const isMovieChangeOpen = ref<boolean>(false);
-  
-  const OpenChangMovieModal = (info) => {
-    console.log(info)
-    isMovieChangeOpen.value = true;
-   
+  const selectedChange = ref<{ placementId: number; durationId: number } | null>(null);
+  const selectedMovieId = ref<number | null>(null);
+
+  const OpenChangMovieModal = (placement: any, durationId: number) => {
+  selectedChange.value = {
+    placementId: placement.placement_id,
+    durationId: durationId,
+  };
+  isMovieChangeOpen.value = true;
+};
+
+const changeConfirmedMovie = async () => {
+  if (!selectedChange.value || !selectedMovieId.value) return;
+
+  try {
+    await axios.post("/bookings/change-movie", {
+      placement_id: selectedChange.value.placementId,
+      duration_id: selectedChange.value.durationId,
+      new_movie_id: selectedMovieId.value,
+    });
+
+    isMovieChangeOpen.value = false;
+    selectedChange.value = null;
+    selectedMovieId.value = null;
+
+    successMessage.value = "Movie changed successfully!";
+    router.reload({ only: ['PlacementList'] });
+
+  } catch (error) {
+    console.error("Failed to change movie:", error);
+    errorMessage.value = "Failed to change movie.";
   }
+};
+
+
   const CloseChangMovieModal = () => {
     isMovieChangeOpen.value = false;
   }
@@ -187,11 +197,8 @@ const calculateGraceDate = (releaseDate: string): string => {
     return dayjs(releaseDate).subtract(35, 'day').format('YYYY-MM-DD');
 };
 
-
-
   </script>
   <template>
-    {{ selectedBookings }}
     <DefaultLayout title="Cinema List">
       <div class="p-6 bg-white rounded shadow-md">
         <div class="flex justify-between mb-6">
@@ -229,53 +236,46 @@ const calculateGraceDate = (releaseDate: string): string => {
           {{ errorMessage }}
         </div>
   
-        <div class="overflow-x-auto w-full">
-          <table class="min-w-full border-collapse border border-gray-300">
-            <thead>
-              <tr class="bg-[#8c8c8c] text-white text-gray-700 text-center">
-              <th class="border border-gray-300 px-6 py-4 whitespace-nowrap text-left">Placement</th>
-              <th class="border border-gray-300 px-6 py-4 whitespace-nowrap text-center">W x H in cm</th>
-              <th class="border border-gray-300 px-6 py-4 whitespace-nowrap text-center">Price</th>
-              <th v-for="(duration, index) in durations" :key="duration.id" :class="index === 4 ? 'border border-grey-300 py-4 bg-[#677489] text-sm text-white' : 'border border-grey-300 bg-[#8c8c8c] text-white py-4 text-sm'">
-               {{ getDateRangeWithWeeks(duration.start_date) }}
-              
-              </th>
-            </tr>
-            </thead>
-            <tbody>
-              <tr class="bg-black">
-                <td colspan="3" class="border border-gray-300  font-bold text-center text-sm text-white">Deadline</td>
-                <td v-for="(duration, index) in durations" :key="duration.id" :class="'border border-gray-300 py-3 text-center font-bold text-white text-sm'">
-                    {{ formatProductionDeadline(duration.production_deadline) }}
-           
-                </td>
-              </tr>
-              <template v-for="(cinema, index) in getPlacementDurations" :key="cinema.cinema_name">
-          
-          <tr class="bg-white text-black text-sm">
-            <td :colspan="4 + durations.length" class="px-4 py-2 font-bold">
-              {{ cinema.cinema_name }}
+        <div class="overflow-x-auto w-full relative max-h-[700px]">
+  <table class="relative min-w-full border-collapse border border-black">
+    <thead class="sticky top-0 bg-[#8c8c8c] z-10">
+      <tr class="text-white text-gray-700 text-center">
+        <th class="border border-black px-6 py-4 whitespace-nowrap text-left">Placement</th>
+        <th class="border border-black px-6 py-4 whitespace-nowrap text-center">W x H in cm</th>
+        <th class="border border-black px-6 py-4 whitespace-nowrap text-center">Price</th>
+        <th v-for="(duration, index) in durations" :key="duration.id"
+            :class="index === 4 ? 'border border-black py-4 bg-[#677489] text-sm text-white' : 'border border-black bg-[#8c8c8c] text-white py-4 text-sm'">
+          {{ getDateRangeWithWeeks(duration.start_date) }}
+        </th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr class="sticky top-17 bg-black z-50">
+    <td colspan="3" class="border border-black font-bold text-center text-sm text-white">Deadline</td>
+    <td v-for="(duration, index) in durations" :key="duration.id"
+        class="border border-black py-3 text-center font-bold text-white text-sm">
+      {{ formatProductionDeadline(duration.production_deadline) }}
+    </td>
+  </tr>
+      <template v-for="(cinema, index) in getPlacementDurations" :key="cinema.cinema_name">
+        <tr class="bg-white text-black text-sm">
+          <td :colspan="4 + durations.length" class="px-4 py-2 font-bold">
+            {{ cinema.cinema_name }}
+          </td>
+        </tr>
+        <template v-for="placement in cinema.placements" :key="placement.placement_id">
+          <tr class="bg-white text-gray-700 text-sm">
+            <td class="border border-black px-4 py-3">
+              {{ placement.placement_name }}
             </td>
-          </tr>
-          
-          <template v-for="placement in cinema.placements" :key="placement.placement_id">
-            <tr class="bg-white text-gray-700 text-sm">
-              <!-- Placement Name -->
-              <td class="border border-gray-300 px-4 py-3">
-                {{ placement.placement_name }}
-              </td>
-              <!-- Width x Height -->
-              <td class="border border-gray-300 px-4 py-3 text-center">
-                {{ placement.placement_width }} x {{ placement.placement_height }}
-              </td>
-              <!-- Price -->
-              <td class="border border-gray-300 px-4 py-3 text-center font-bold text-green-600">
-                {{ placement.placement_price }}
-              </td>             
-              <!-- Duration Cells -->
-              <!-- @click="placement.durations.some(d => d.duration_id === duration.id && !d.is_confirmed) ? OpenChangMovieModal(placement) : null" -->
-              <td v-for="duration in durations" :key="duration.id" 
-                class="border border-gray-300 px-4 py-3 text-center"
+            <td class="border border-black px-4 py-3 text-center">
+              {{ placement.placement_width }} x {{ placement.placement_height }}
+            </td>
+            <td class="border border-black px-4 py-3 text-center font-bold text-green-600">
+              {{ placement.placement_price }}
+            </td>
+            <td v-for="duration in durations" :key="duration.id"
+                class="border border-black px-4 py-3 text-center"
                 :class="{
                     'bg-[#c8c8c8] text-black': placement.durations.some(d => d.duration_id === duration.id && d.accepted_movie === 'N/A'), // N/A - Grey
 
@@ -286,9 +286,7 @@ const calculateGraceDate = (releaseDate: string): string => {
                                               new Date(calculateGraceDate(Movie_details.movies_release_date)) <= new Date(duration.start_date), // Orange if AFTER grace date
 
                     'bg-yellow-200 text-black cursor-pointer': placement.durations.some(d => d.duration_id === duration.id && !d.is_confirmed), // Pending - Yellow & Clickable
-                  }"
-                
-              >
+                  }">
                 <template v-if="placement.durations.some(d => d.duration_id === duration.id && d.accepted_movie === 'N/A')">
                   <div class="flex items-center justify-center space-x-2">
                     {{ placement.durations.some(d => d.duration_id === duration.id && !d.is_confirmed) ? "Pending" : "N/A" }}
@@ -301,9 +299,17 @@ const calculateGraceDate = (releaseDate: string): string => {
                     />
                   </div>
                 </template>
-                <template  @click="OpenChangMovieModal(placement)" v-else-if="placement.durations.some(d => d.duration_id === duration.id && d.is_confirmed)">
+                <template v-else-if="placement.durations.some(d => d.duration_id === duration.id && d.is_confirmed)">      
+                  <div class="w-full h-full cursor-pointer" v-if="placement.durations.some(d => d.duration_id === duration.id && d.is_confirmed && d.accepted_movie !== 'N/A') 
+                  && new Date(calculateGraceDate(Movie_details.movies_release_date)) <= new Date(duration.start_date) === false" @click="OpenChangMovieModal(placement, duration.id)">
                   {{ placement.durations.find(d => d.duration_id === duration.id)?.accepted_movie || 'Confirmed' }} 
+                  {{Movie_details.movies_name ===  placement.durations.find(d => d.duration_id === duration.id)?.accepted_movie}}
+                  
+                  </div>
 
+                  <div class="w-full h-full" v-else>
+                    {{ placement.durations.find(d => d.duration_id === duration.id)?.accepted_movie || 'Confirmed' }}หหห
+                  </div>
                 </template>
                 <template v-else>
                   <div class="flex items-center justify-center space-x-2">
@@ -319,24 +325,27 @@ const calculateGraceDate = (releaseDate: string): string => {
             </tr>
           </template> 
         </template>
-            </tbody>
-          </table>
-        </div>
-        </
+    </tbody>
+  </table>
+</div>
+
+      
         <!-- Change Movie Modal -->
         <div v-if="isMovieChangeOpen" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 transition ">
           <div class="bg-white w-96 rounded-lg shadow-lg p-6">
             <h2 class="text-xl font-semibold mb-4">Select a Movie</h2>
             
             <div class="space-y-2 max-h-60 overflow-y-auto">
-              <select class="input-style" name="usermovie" id="user-movie">
-                <option> Select Movie </option>
-                <option value="" v-for="movie in userMovie" >{{ movie.movies_name }}</option>
-              </select>
+              <select v-model="selectedMovieId" class="input-style w-full" name="usermovie" id="user-movie">
+              <option disabled selected value="">Select Movie</option>
+              <option :value="movie.id" v-for="movie in userMovie" :key="movie.id">
+                {{ movie.movies_name }}
+              </option>
+            </select>
             </div>
   
             <div class="mt-4 flex justify-end space-x-2">
-              <button @click="(()=> isMovieChangeOpen.value = false)" class="px-4 py-2 bg-green-300 rounded-lg"> Submit </button>
+              <button @click="changeConfirmedMovie" class="px-4 py-2 bg-green-300 rounded-lg">Submit</button>
               <button @click="CloseChangMovieModal" class="px-4 py-2 bg-gray-300 rounded-lg">Cancel</button>
             </div>
           </div>

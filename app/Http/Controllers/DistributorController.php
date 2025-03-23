@@ -457,6 +457,44 @@ public function BookingCalendar($id)
     ]);
 }
 
+public function changeAcceptedMovie(Request $request)
+{
+    $request->validate([
+        'placement_id' => 'required|integer',
+        'duration_id' => 'required|integer',
+        'new_movie_id' => 'required|integer',
+    ]);
+
+    $user = auth()->user();
+    $userCompanyId = $user->user_company_id;
+
+    // ตรวจสอบว่าหนังใหม่เป็นของบริษัทตัวเอง
+    $newMovie = movies::where('id', $request->new_movie_id)
+        ->where('company_id', $userCompanyId)
+        ->firstOrFail();
+
+    // ค้นหา booking ที่ยืนยันแล้ว
+    $bookingDetail = DB::table('bookings_detail as bd')
+        ->join('bookings as b', 'bd.booking_id', '=', 'b.id')
+        ->join('movies as m', 'b.movie_id', '=', 'm.id')
+        ->where('bd.placement_id', $request->placement_id)
+        ->where('bd.duration_id', $request->duration_id)
+        ->where('bd.booking_status', 'accepted')
+        ->where('m.company_id', $userCompanyId)
+        ->select('bd.id as detail_id', 'b.id as booking_id')
+        ->first();
+
+    if (!$bookingDetail) {
+        return response()->json(['error' => 'Booking not found or unauthorized'], 403);
+    }
+
+    // อัปเดต movie_id ของ booking
+    DB::table('bookings')
+        ->where('id', $bookingDetail->booking_id)
+        ->update(['movie_id' => $request->new_movie_id]);
+
+    return response()->json(['message' => 'Movie updated successfully']);
+}
 
 
 

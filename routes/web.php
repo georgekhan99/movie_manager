@@ -79,6 +79,8 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified',
     Route::get('/distributor/delete/movie/{id}', [App\Http\Controllers\DistributorController::class, 'DeleteMovie'])->name('distributor.movie.edit');
     // Route::get('/distributor/calendar/booking/{MovieId}', [App\Http\Controllers\DistributorController::class, 'DeleteMovie'])->name('distributor.calendar.booking');
     Route::get('/distributor/bookings/{id}', [App\Http\Controllers\DistributorController::class, 'BookingCalendar'])->name('distributor.get.movieCalendar');
+
+    Route::post('/bookings/change-movie', [App\Http\Controllers\DistributorController::class, 'changeAcceptedMovie'])->name('change.movie');
     
     //Booking Calendar
     Route::get('bookings/calendar/view',[App\Http\Controllers\BookingsController::class, 'getCalendarPageload'])->name('bookigs.calendar.view');
@@ -89,6 +91,8 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified',
     Route::get('bookings/manager/distributor', [App\Http\Controllers\BookingsController::class, 'getBookingManagerPageload'])->name('bookigs.pageload');
     Route::post('/bookings/create', [App\Http\Controllers\BookingsController::class, 'createBookings'])->name('bookigs.create');
     Route::post('/bookings/placements/confirm', [App\Http\Controllers\BookingsController::class, 'confirmBookings'])->name('confirm.bookings');
+
+
 });
 
 
