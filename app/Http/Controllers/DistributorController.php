@@ -594,7 +594,6 @@ public function changeAcceptedMovie(Request $request)
 
 
 
-    
 
     public function getEditMoviePage($id)
     {

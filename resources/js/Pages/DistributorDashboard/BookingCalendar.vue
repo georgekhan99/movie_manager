@@ -122,6 +122,7 @@ const getPlacementDurations = computed(() => {
 const isMovieChangeOpen = ref<boolean>(false);
 const selectedChange = ref<{ placementId: number; durationId: number } | null>(null);
 const selectedMovieId = ref<number | null>(null);
+const selectedPlacementDuration = ref<{ placementId: number; durationId: number } | null>(null);
 
 const OpenChangMovieModal = (placement: any, durationId: number) => {
   selectedChange.value = {
