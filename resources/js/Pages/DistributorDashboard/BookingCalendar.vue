@@ -132,7 +132,10 @@ const OpenChangMovieModal = (placement: any, durationId: number) => {
 };
 
 const changeConfirmedMovie = async () => {
-  if (!selectedChange.value || !selectedMovieId.value) return;
+  if (!selectedChange.value || !selectedMovieId.value) {
+    errorMessage.value = "Please select a movie before submitting.";
+    return;
+  }
 
   try {
     await axios.post("/bookings/change-movie", {
@@ -141,16 +144,21 @@ const changeConfirmedMovie = async () => {
       new_movie_id: selectedMovieId.value,
     });
 
+    // ปิด modal และรีเซ็ตค่าต่างๆ
     isMovieChangeOpen.value = false;
     selectedChange.value = null;
     selectedMovieId.value = null;
 
     successMessage.value = "Movie changed successfully!";
-    router.reload({ only: ['PlacementList'] });
+    errorMessage.value = "";
+    
+    // รีโหลดเฉพาะข้อมูลที่เปลี่ยน
+    router.reload({ only: ["PlacementList"] });
 
-  } catch (error) {
+  } catch (error: any) {
     console.error("Failed to change movie:", error);
-    errorMessage.value = "Failed to change movie.";
+    errorMessage.value = error.response?.data?.error || "Failed to change movie.";
+    successMessage.value = "";
   }
 };
 
@@ -279,7 +287,7 @@ const calculateGraceDate = (releaseDate: string): string => {
                   <td class="border border-black px-4 py-3 text-center">
                     {{ placement.placement_width }} x {{ placement.placement_height }}
                   </td>
-                  <td class="border border-black px-4 py-3 text-center font-bold text-green-600">
+                  <td class="border border-black px-4 py-3 text-center font-bold text-black">
                     {{ placement.placement_price }}
                   </td>
                   <td v-for="duration in durations" :key="duration.id" class="border border-black px-4 py-3 text-center"
@@ -306,32 +314,35 @@ const calculateGraceDate = (releaseDate: string): string => {
                           @change="toggleBooking(placement.placement_id, duration.id, placement.durations.some(d => d.duration_id === duration.id && !d.is_confirmed))" />
                       </div>
                     </template>
-                    <template
-                      v-else-if="placement.durations.some(d => d.duration_id === duration.id && d.is_confirmed)">
+                    <template v-else-if="placement.durations.some(d => d.duration_id === duration.id && d.is_confirmed)">
+               <!-- ✅ ถ้า Checkbox โชว์ชื่อหนังถูกเปิด -->
+                    <div  @click="OpenChangMovieModal(placement, duration.id)" v-if="showMovieName" class="w-full h-full text-black cursor-pointer">
+                      {{ placement.durations.find(d => d.duration_id === duration.id)?.accepted_movie || 'N/A' }}
+                    </div>
+
+                    <!-- 🔄 Logic เดิม เมื่อต้องเปรียบเทียบชื่อหนัง และให้คลิกเปลี่ยน -->
+                    <template v-else>
+                      <!-- คลิกเพื่อเปลี่ยนหนังถ้าอยู่ใน grace period -->
                       <div class="w-full h-full cursor-pointer text-black"
                         v-if="placement.durations.some(d => d.duration_id === duration.id && d.is_confirmed && d.accepted_movie !== 'N/A')
-                          && new Date(calculateGraceDate(Movie_details.movies_release_date)) <= new Date(duration.start_date) === false"
+                          && new Date(calculateGraceDate(Movie_details.movies_release_date)) > new Date(duration.start_date)"
                         @click="OpenChangMovieModal(placement, duration.id)">
-                        <!-- Logic To Show Movie Name Following The Calendar Owner -->
-                        {{Movie_details.movies_name === placement.durations.find(d => d.duration_id ===
-                          duration.id)?.accepted_movie
+                        {{ Movie_details.movies_name === placement.durations.find(d => d.duration_id === duration.id)?.accepted_movie
                           ? placement.durations.find(d => d.duration_id === duration.id)?.accepted_movie
-                          : "Confirm"
-                        }}
-
+                          : 'Confirm' }} 
                       </div>
-                      <!-- 2nd Logic The Orange one -->
+
+                      <!-- กรณีแสดง Pending ถ้าไม่ใช่หนังเจ้าของ -->
                       <div class="w-full h-full text-black" v-else>
-                        {{placement.durations.find(d => d.duration_id === duration.id)?.accepted_movie ===
-                          Movie_details.movies_name
+                        {{ placement.durations.find(d => d.duration_id === duration.id)?.accepted_movie === Movie_details.movies_name
                           ? placement.durations.find(d => d.duration_id === duration.id)?.accepted_movie
-                          : "Pending"
-                        }}
+                          : 'Pending' }}
                       </div>
                     </template>
+                  </template>
                     <template v-else>
                       <div class="flex items-center justify-center space-x-2">
-                        <span class="text-gray-500">Available</span>
+                        <span class="text-black">Available</span>
                         <input type="checkbox" class="w-5 h-5"
                           @change="toggleBooking(placement.placement_id, duration.id, 0)" />
                       </div>

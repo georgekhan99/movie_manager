@@ -15,6 +15,8 @@ class bookings_detail extends Model
         'booking_id',
         'placement_id',
         'duration_id',
+        'movie_id',
         'booking_status'
+        
     ];
 }
