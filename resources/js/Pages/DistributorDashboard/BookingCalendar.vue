@@ -12,7 +12,7 @@ const durations = ref<{ id: number; start_date: string }[]>(page.props.durations
 //Show Hide Movie Name
 const showMovieName = ref(false);
 
-defineProps<{
+const props = defineProps<{
   Movie_details: { id: number; movies_name: string; movies_release_date: string };
   userMovie: { id: number; movies_name: string };
   PlacementList: Array<{
@@ -28,6 +28,7 @@ defineProps<{
     }[]
   }>;
 }>();
+const userMovie = props.userMovie;
 
 // Store selected bookings
 const selectedBookings = ref<{ placementId: number; durationId: number }[]>([]);
@@ -132,6 +133,23 @@ const OpenChangMovieModal = (placement: any, durationId: number) => {
   isMovieChangeOpen.value = true;
 };
 
+const currentAcceptedMovieName = computed(() => {
+  if (!selectedChange.value) return null;
+
+  const placement = getPlacementDurations.value
+    .flatMap(cinema => cinema.placements)
+    .find(p => p.placement_id === selectedChange.value.placementId);
+
+  const match = placement?.durations.find(
+    (d) => d.duration_id === selectedChange.value.durationId
+  );
+
+  return match?.accepted_movie && match.accepted_movie !== "N/A"
+    ? match.accepted_movie
+    : null;
+});
+
+
 const changeConfirmedMovie = async () => {
   if (!selectedChange.value || !selectedMovieId.value) {
     errorMessage.value = "Please select a movie before submitting.";
@@ -162,7 +180,6 @@ const changeConfirmedMovie = async () => {
     successMessage.value = "";
   }
 };
-
 
 const CloseChangMovieModal = () => {
   isMovieChangeOpen.value = false;
@@ -365,8 +382,24 @@ const calculateGraceDate = (releaseDate: string): string => {
 
           <div class="space-y-2 max-h-60 overflow-y-auto">
             <select v-model="selectedMovieId" class="input-style w-full" name="usermovie" id="user-movie">
-              <option disabled selected value="">Select Movie</option>
-              <option :value="movie.id" v-for="movie in userMovie" :key="movie.id">
+              <option disabled value="">Select Movie</option>
+              
+
+              <!-- แสดงหนังปัจจุบัน (current) -->
+              <option
+                v-if="currentAcceptedMovieName"
+                :value="null"
+                disabled
+              >
+                Current: {{ currentAcceptedMovieName }}
+              </option>
+
+              <!-- แสดงหนังที่สามารถเลือกได้ -->
+              <option
+                v-for="movie in userMovie.filter(m => m.movies_name !== currentAcceptedMovieName)"
+                :key="movie.id"
+                :value="movie.id"
+              >
                 {{ movie.movies_name }}
               </option>
             </select>
