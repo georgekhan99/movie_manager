@@ -90,34 +90,74 @@ const submitBookings = async () => {
 };
 
 // Ensure correct grouping of placements & durations
-const getPlacementDurations = computed(() => {
-  return page.props.PlacementList.map(cinema => ({
-    cinema_name: cinema.cinema_name,
-    placements: cinema.placements.reduce((acc, placement) => {
-      const existingPlacement = acc.find((p: any) => p.placement_id === placement.placement_id);
+// const getPlacementDurations = computed(() => {
+//   return page.props.PlacementList.map(cinema => ({
+//     cinema_name: cinema.cinema_name,
+//     placements: cinema.placements.reduce((acc, placement) => {
+//       const existingPlacement = acc.find((p: any) => p.placement_id === placement.placement_id);
 
-      const durationInfo = {
-        duration_id: placement.duration_id,
-        is_confirmed: placement.is_confirmed,
-        accepted_movie: placement.accepted_movie,
-      };
+//       const durationInfo = {
+//         duration_id: placement.duration_id,
+//         is_confirmed: placement.is_confirmed,
+//         accepted_movie: placement.accepted_movie,
+//       };
 
-      if (existingPlacement) {
-        existingPlacement.durations.push(durationInfo);
-      } else {
-        acc.push({
-          placement_id: placement.placement_id,
-          placement_name: placement.placement_name,
-          placement_width: placement.placement_width,
-          placement_height: placement.placement_height,
-          placement_price: placement.placement_price,
-          durations: [durationInfo],
-        });
-      }
+//       if (existingPlacement) {
+//         existingPlacement.durations.push(durationInfo);
+//       } else {
+//         acc.push({
+//           placement_id: placement.placement_id,
+//           placement_name: placement.placement_name,
+//           placement_width: placement.placement_width,
+//           placement_height: placement.placement_height,
+//           placement_price: placement.placement_price,
+//           durations: [durationInfo],
+//         });
+//       }
 
-      return acc;
-    }, [] as any[])
-  }));
+//       return acc;
+//     }, [] as any[])
+//   }));
+// });
+
+const selectedBrand = ref<string | null>(null);
+
+const getFilteredPlacementDurations = computed(() => {
+  const rawList = page.props.PlacementList;
+
+  const filtered = selectedBrand.value
+    ? rawList.filter(p => p.brand_name === selectedBrand.value)
+    : rawList;
+
+  return filtered.flatMap(brand =>
+    brand.cinemas.map(cinema => ({
+      cinema_name: cinema.cinema_name,
+      placements: cinema.placements.reduce((acc, placement) => {
+        const existingPlacement = acc.find(p => p.placement_id === placement.placement_id);
+
+        const durationInfo = {
+          duration_id: placement.duration_id,
+          is_confirmed: placement.is_confirmed,
+          accepted_movie: placement.accepted_movie,
+        };
+
+        if (existingPlacement) {
+          existingPlacement.durations.push(durationInfo);
+        } else {
+          acc.push({
+            placement_id: placement.placement_id,
+            placement_name: placement.placement_name,
+            placement_width: placement.placement_width,
+            placement_height: placement.placement_height,
+            placement_price: placement.placement_price,
+            durations: [durationInfo],
+          });
+        }
+
+        return acc;
+      }, [] as any[])
+    }))
+  );
 });
 
 const isMovieChangeOpen = ref<boolean>(false);
@@ -245,8 +285,11 @@ const calculateGraceDate = (releaseDate: string): string => {
           <div class="w-4/12 flex justify-center">
             <div class="flex items-center mt-2">
               <h2 class="text-2xl font-bold"> Cinemas: </h2>
-              <select class="input-style input-style h-4 w-full" name="" id="">
-                <option value="Fokus Biograferne"> Fokus Biograferne </option>
+              <select v-model="selectedBrand" class="input-style w-full ml-2">
+                <option value="">All Brands</option>
+                <option v-for="(label, id) in page.props.brands" :key="id" :value="label">
+                  {{ label }}
+                </option>
               </select>
             </div>
           </div>
@@ -291,7 +334,7 @@ const calculateGraceDate = (releaseDate: string): string => {
                 {{ formatProductionDeadline(duration.production_deadline) }}
               </td>
             </tr>
-            <template v-for="(cinema, index) in getPlacementDurations" :key="cinema.cinema_name">
+            <template v-for="(cinema, index) in getFilteredPlacementDurations" :key="cinema.cinema_name">
               <tr class="bg-white text-black text-sm">
                 <td :colspan="4 + durations.length" class="px-4 py-2 font-bold">
                   {{ cinema.cinema_name }}
