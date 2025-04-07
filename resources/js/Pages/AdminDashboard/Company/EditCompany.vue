@@ -8,7 +8,9 @@ import Modal from "@/Components/Modal.vue";
 const props = defineProps({
     CompanyData: Object,
     labels: Object,
+    cinemasData: Object
 });
+
 
 const showModal = ref(false);
 let Addusers = ref({});
@@ -467,6 +469,54 @@ const form = useForm({
                     </div>
                 </div>
             </div>
+            
+            <!-- Cinema -->
+             <template></template>
+            <div class="p-6.5">
+                <div
+                    class="w-full flex items-center justify-between border-b border-stroke"
+                >
+                    <p class="text-xl mb-2 font-medium">Cinema List</p>
+                    <button
+                        @click="openModal()"
+                        class="w-30 mb-2 flex w-2xl justify-center rounded bg-primary p-3 font-medium text-gray hover:bg-opacity-70"
+                    >
+                        <div v-html="Icon.Plus"></div>
+                    </button>
+                </div>
+                <!-- Table Header -->
+                <div
+                    class="grid grid-cols-6 border-t border-stroke py-4.5 px-4 dark:border-strokedark sm:grid-cols-8 md:px-6 2xl:px-7.5"
+                >
+                    <div class="col-span-3 flex items-center">
+                        <p class="font-medium">Cinema Name</p>
+                    </div>
+                    <div class="col-span-1 flex items-center">
+                        <p class="font-medium">Action</p>
+                    </div>
+                </div>
+
+                <div v-for="cinema in cinemasData" class="grid grid-cols-6 border-t border-stroke py-4.5 px-4 dark:border-strokedark sm:grid-cols-8 md:px-6 2xl:px-7.5">
+                    <div class="col-span-3 flex items-center">
+                        <div
+                            class="flex flex-col gap-4 sm:flex-row sm:items-center"
+                        >
+                            <p
+                                class="text-md font-medium text-black dark:text-white"
+                            >
+                                {{ cinema.cinema_name }} 
+                            </p>
+                        </div>
+                    </div>
+                    <div class="col-span-1 flex items-centers">
+                        <!-- <Link preserve-scroll :href="`/dashboard/delete/company/${user.c_id}/users`" as="button"  class="text-md font-medium text-black dark:text-white hover:text-primary cursor-pointer">
+                            <div v-html="Icon.Trash" /> 
+                        </Link> -->
+                    </div>
+                </div>
+            </div>
+
+    
             <!-- End Company User -->
             <!-- Modal Open -->
             <Modal :show="showModal">

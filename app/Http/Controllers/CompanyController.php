@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\label;
 use App\Models\Company;
 use App\Models\Company_users;
+use App\Models\Cinemas;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 
@@ -82,10 +83,16 @@ class CompanyController extends Controller
         )
         ->first();
         $labels = label::all();
+
+        $CinemasData = DB::table('cinemas')
+        ->where('cinemas.company_id', $id)
+        ->select('id', 'cinema_name', 'company_id')
+        ->get();
     
         return Inertia::render('AdminDashboard/Company/EditCompany',[
             'CompanyData' => $companyData,
-            'labels' => $labels
+            'labels' => $labels,
+            'cinemasData' => $CinemasData
         ]);
 
     }
