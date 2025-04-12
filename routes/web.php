@@ -63,6 +63,13 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified',
     Route::post('/dashboard/placement/update',[App\Http\Controllers\CinemaController::class, 'updateplacement'])->name('adminpage.placement.updates');
     Route::post('/dashboard/placement/delete',[App\Http\Controllers\CinemaController::class, 'deletePlacement'])->name('adminpage.placement.delete');
     Route::post('/dashboard/placement/add/more',[App\Http\Controllers\CinemaController::class, 'saveMorePlacement'])->name('adminpage.placement.savemore');
+
+
+
+    //Cinema Bookings
+    Route::get('/dashboard/cinema/booking-calendar',[App\Http\Controllers\CinemaController::class, 'GetMovieMangagerCalendar'])->name('adminpage.cinema.bookingCalendar');
+
+
     
     //All Cinema
     Route::get('/dashboard/cinema/', [App\Http\Controllers\CinemaController::class, 'getCinemaPageLoad'])->name('adminpage.cinema.AllCinemas');

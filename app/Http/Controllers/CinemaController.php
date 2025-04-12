@@ -10,7 +10,8 @@ use App\Models\Cinemas;
 use App\Models\Company;
 use App\Models\Placement;
 use App\Models\bookings_detail;
-
+use App\Models\Duration;
+use Carbon\Carbon;
 
 class CinemaController extends Controller
 {
@@ -229,6 +230,9 @@ class CinemaController extends Controller
                 $placement->placement_colors = $placementData['colors'] ?? null;
                 $placement->placement_material = $placementData['material'] ?? null;
                 $placement->placement_price = $placementData['price'] ?? null;
+                $placement->placement_type = $placementData['type'] ?? null;
+                $placement->placement_finishing = $placementData['finishing'] ?? null;
+                $placement->placement_shipping_price = $placementData['shipping_price'] ?? null;
                 // Handle image file upload
                 $fileKey = "placements.$index.image";
                 if ($request->hasFile($fileKey)) {
@@ -319,4 +323,89 @@ class CinemaController extends Controller
         $data->delete();
         return redirect()->back()->with(['message' => 'Deleted Placement Successfulluy']);
     }
+
+
+
+
+
+    
+
+    public function GetMovieMangagerCalendar(Request $request)
+    {
+        $offset = intval($request->input('offset', 0));
+        $today = Carbon::now()->startOfDay()->addDays($offset * 7); // paginate ทีละ 7 วัน
+    
+        $durations = collect();
+        for ($i = 0; $i < 6; $i++) {
+            $start = $today->copy()->addDays($i * 14);
+            $end = $start->copy()->addDays(13);
+            $deadline = $start->copy()->subDay();
+    
+            $durations->push([
+                'id' => $i + 1,
+                'start_date' => $start->toDateString(),
+                'end_date' => $end->toDateString(),
+                'production_deadline' => $deadline->toDateString(),
+            ]);
+        }
+    
+        $cinemas = DB::table('cinemas')
+            ->join('cinema_placements', 'cinemas.id', '=', 'cinema_placements.cinema_id')
+            ->select('cinemas.id', 'cinemas.cinema_name')
+            ->distinct()
+            ->get();
+    
+        $calendarData = [];
+    
+        foreach ($cinemas as $cinema) {
+            $placements = DB::table('cinema_placements as cp')
+                ->where('cp.cinema_id', $cinema->id)
+                ->select('cp.id', 'cp.placement_name', 'cp.placement_width', 'cp.placement_height', 'cp.placement_price')
+                ->get();
+    
+            $formattedPlacements = [];
+    
+            foreach ($placements as $placement) {
+                $bookings = DB::table('bookings_detail as bd')
+                    ->where('bd.placement_id', $placement->id)
+                    ->leftJoin('movies as m', 'bd.movie_id', '=', 'm.id')
+                    ->select(
+                        'bd.duration_id',
+                        'bd.booking_status as status',
+                        'm.movies_name as movie_name',
+                        'm.id as movie_id',
+                        'm.movies_release_date'
+                    )
+                    ->get();
+    
+                $formattedPlacements[] = [
+                    'placement_id' => $placement->id,
+                    'placement_name' => $placement->placement_name,
+                    'width' => $placement->placement_width,
+                    'height' => $placement->placement_height,
+                    'price' => $placement->placement_price,
+                    'bookings' => $bookings
+                ];
+            }
+    
+            $calendarData[] = [
+                'group_name' => $cinema->cinema_name,
+                'placements' => $formattedPlacements
+            ];
+        }
+    
+        return Inertia::render('MoviesManager/MovieManagerCalendar', [
+            'durations' => $durations,
+            'calendarData' => $calendarData,
+            'currentOffset' => $offset
+        ]);
+    }
+    
+
+    
+    
+    
+    
+    
+    
 }

@@ -30,6 +30,9 @@ const placements = ref<Placement[]>([
         colors: "",
         material: "",
         price: "",
+        type: "",
+        finishing: "",
+        shipping_price: "",
         image: null,
         imagePreview: null,
     },
@@ -45,6 +48,9 @@ const addPlacement = () => {
         colors: "",
         material: "",
         price: "",
+        type: "",
+        finishing: "",
+        shipping_price: "",
         image: null,
         imagePreview: null,
     });
@@ -57,24 +63,30 @@ const savePlacements = () => {
     // You can send `placements.value` to the server for saving
     const formData = new FormData();
     // formData.append('Cinema_id',  cinemas_data);
-    formData.append('Cinema_id', props.cinemas_data.id);
+    formData.append("Cinema_id", props.cinemas_data.id);
     placements.value.forEach((placement, index) => {
         formData.append(`placements[${index}][name]`, placement.name);
-        formData.append(`placements[${index}][description]`, placement.description);
+        formData.append(
+            `placements[${index}][description]`,
+            placement.description
+        );
         formData.append(`placements[${index}][height]`, placement.height);
         formData.append(`placements[${index}][width]`, placement.width);
         formData.append(`placements[${index}][colors]`, placement.colors);
         formData.append(`placements[${index}][material]`, placement.material);
         formData.append(`placements[${index}][price]`, placement.price);
+        formData.append(`placements[${index}][type]`, placement.type);
+        formData.append(`placements[${index}][finishing]`, placement.finishing);
+        formData.append(`placements[${index}][shipping_price]`, placement.shipping_price);
+
 
         // Handle image file upload if it exists
         if (placement.image) {
             formData.append(`placements[${index}][image]`, placement.image);
         }
     });
-    router.post('/dashboard/placement/add/more', formData);
+    router.post("/dashboard/placement/add/more", formData);
     // console.log("Saving placements:", placements.value);
-   
 };
 
 // Preview image for a placement
@@ -91,7 +103,6 @@ const previewPlacementImage = (event: Event, index: number) => {
 };
 </script>
 <template>
-   
     <DefaultLayout v-if="!cinemas_data">
         <div class="mx-auto max-w-screen-2xl p-4 md:p-6 2xl:p-10">
             <div class="flex items-center justify-center">
@@ -105,40 +116,56 @@ const previewPlacementImage = (event: Event, index: number) => {
     <DefaultLayout v-else title="Create Placement">
         <div class="mx-auto max-w-screen-2xl p-4 md:p-6 2xl:p-10">
             <div
-                class="rounded-sm border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark"
+                class="rounded-sm bg-white  dark:border-strokedark dark:bg-boxdark"
             >
-                <div class="border-b border-stroke px-6.5 py-4 dark:border-strokedark">
+                <div
+                    class="border-b border-stroke px-6.5 py-4 dark:border-strokedark"
+                >
                     <h2 class="text-2xl font-bold">Create Placement</h2>
                 </div>
 
                 <!-- Dynamic Form Section -->
-                <div class="px-6.5 py-4 space-y-6">
+                <div class="w-full space-y-10">
+                    <!-- Loop through each placement -->
                     <div
                         v-for="(placement, index) in placements"
                         :key="index"
-                        class="border-b pb-4"
+                        class="flex gap-6 border border-gray-200 rounded-md p-6 shadow-sm"
                     >
-                        <h3 class="text-xl font-semibold">
-                            Placement {{ index + 1 }}
-                        </h3>
+                        <!-- Left side: Form Inputs -->
+                        <div class="w-1/2 space-y-4">
+                            <h3 class="text-xl font-semibold mb-2">
+                                Placement {{ index + 1 }}
+                            </h3>
 
-                        <!-- Form Fields -->
-                        <div>
-                            <label class="block text-sm font-medium">
-                                Place Name
-                            </label>
-                            <input
-                                v-model="placement.name"
-                                type="text"
-                                class="input-style"
-                                placeholder="Enter place name"
-                            />
+                            <div>
+                                <label class="block text-sm font-medium"
+                                    >Place Name</label
+                                >
+                                <input
+                                    v-model="placement.name"
+                                    type="text"
+                                    class="input-style"
+                                    placeholder="Enter place name"
+                                />
+                            </div>
 
-                            <div class="flex gap-4 mt-4">
+                            <div>
+                                <label class="block text-sm font-medium"
+                                    >Description</label
+                                >
+                                <textarea
+                                    v-model="placement.description"
+                                    class="input-style"
+                                    placeholder="Enter description"
+                                ></textarea>
+                            </div>
+
+                            <div class="flex gap-4">
                                 <div class="w-1/2">
-                                    <label class="block text-sm font-medium">
-                                        Width
-                                    </label>
+                                    <label class="block text-sm font-medium"
+                                        >Width (mm)</label
+                                    >
                                     <input
                                         v-model="placement.width"
                                         type="text"
@@ -147,9 +174,9 @@ const previewPlacementImage = (event: Event, index: number) => {
                                     />
                                 </div>
                                 <div class="w-1/2">
-                                    <label class="block text-sm font-medium">
-                                        Height
-                                    </label>
+                                    <label class="block text-sm font-medium"
+                                        >Height (mm)</label
+                                    >
                                     <input
                                         v-model="placement.height"
                                         type="text"
@@ -159,104 +186,120 @@ const previewPlacementImage = (event: Event, index: number) => {
                                 </div>
                             </div>
 
-                            <div class="mt-4">
-                                <label class="block text-sm font-medium">
-                                    Material
-                                </label>
-                                <select
-                                    v-model="placement.material"
-                                    class="input-style"
-                                >
-                                    <option>Select Material</option>
-                                    <option value="plastic">Plastic</option>
-                                    <option value="vinyl">Vinyl</option>
-                                    <option value="metal">Metal</option>
-                                </select>
-                            </div>
-                            <div class="mt-4">
-                                <label class="block text-sm font-medium">
-                                    Color
-                                </label>
-                                <select
-                                    v-model="placement.colors"
-                                    class="input-style"
-                                >
-                                    <option>Select Color</option>
-                                    <option value="1-4">1-4</option>
-                                    <option value="Pantone">Pantone</option>
-                                </select>
-                            </div>
-
-                            <div class="mt-4">
-                                <label class="block text-sm font-medium">
-                                    Price
-                                </label>
-                                <input
-                                    v-model="placement.price"
-                                    type="text"
-                                    class="input-style"
-                                    placeholder="Enter price"
-                                />
-                            </div>
-
-                            <div class="mt-4">
-                                <label class="block text-sm font-medium">
-                                    Description
-                                </label>
-                                <textarea
-                                    v-model="placement.description"
-                                    class="input-style"
-                                    placeholder="Enter description"
-                                ></textarea>
-                            </div>
-
-                            <div class="mt-4">
-                                <label class="block text-sm font-medium">
-                                    Upload Image
-                                </label>
-                                <input
-                                    type="file"
-                                    class="input-style"
-                                    @change="(e) => previewPlacementImage(e, index)"
-                                    
-                                />
-                                <div v-if="placement.imagePreview" class="mt-2">
-                                    <h4 class="text-sm font-medium">
-                                        Image Preview
-                                    </h4>
-                                    <img
-                                        :src="placement.imagePreview"
-                                        class="w-32 h-32 object-cover rounded"
-                                        alt="Image Preview"
+                            <div class="flex gap-4">
+                                <div class="w-1/2">
+                                    <label class="block text-sm font-medium"
+                                        >Material</label
+                                    >
+                                    <select
+                                        v-model="placement.material"
+                                        class="input-style w-full"
+                                    >
+                                        <option value="">
+                                            Select Material
+                                        </option>
+                                        <option value="plastic">Plastic</option>
+                                        <option value="vinyl">Vinyl</option>
+                                        <option value="metal">Metal</option>
+                                    </select>
+                                </div>
+                                <div class="w-1/2">
+                                    <label class="block text-sm font-medium"
+                                        >Type</label
+                                    >
+                                    <input
+                                        type="text"
+                                        class="input-style"
+                                        placeholder="Enter Type"
+                                        v-model="placement.type"
                                     />
                                 </div>
                             </div>
+
+                            <div>
+                                <label class="block text-sm font-medium"
+                                    >Finishing</label
+                                >
+                                <textarea
+                                    class="input-style"
+                                    placeholder="Enter finishing..."
+                                    v-model="placement.finishing"
+                                ></textarea>
+                            </div>
+
+                            <div class="flex gap-4">
+                                <div class="w-1/2">
+                                    <label class="block text-sm font-medium"
+                                        >Price</label
+                                    >
+                                    <input
+                                        v-model="placement.price"
+                                        type="text"
+                                        class="input-style"
+                                        placeholder="Enter Shipping price"
+
+                                    />
+                                </div>
+                                <div class="w-1/2">
+                                    <label class="block text-sm font-medium"
+                                        >Shipping Price</label
+                                    >
+                                    <input
+                                        type="text"
+                                        class="input-style"
+                                        placeholder="Enter shipping"
+                                        v-model="placement.shipping_price"
+                                    />
+                                </div>
+                            </div>
+
+                            <!-- Buttons -->
+                            <div class="flex justify-end gap-4 mt-4">
+                                <button
+                                    v-if="index > 0"
+                                    @click="placements.splice(index, 1)"
+                                    class="bg-red-500 text-white px-4 py-2 rounded"
+                                >
+                                    Remove
+                                </button>
+                            </div>
                         </div>
 
-                        <!-- Add/Remove Buttons -->
-                        <div class="flex justify-between mt-4">
-                            <button
-                                v-if="index > 0"
-                                @click="removePlacement(index)"
-                                class="bg-red-500 text-white px-4 py-2 rounded"
+                        <!-- Right side: Image Upload + Preview -->
+                        <div class="w-1/2 space-y-4">
+                            <label class="block text-sm font-medium"
+                                >Upload Image</label
                             >
-                                Remove
-                            </button>
+                            <div v-if="placement.imagePreview">
+                                <h4 class="text-sm font-medium">Preview</h4>
+                                <img
+                                    :src="placement.imagePreview"
+                                    class="w-full max-h-[300px] object-contain rounded border"
+                                    alt="Image Preview"
+                                />
+                            </div>
+                            <input
+                                type="file"
+                                class="input-style w-full"
+                                @change="(e) => previewPlacementImage(e, index)"
+                            />
                         </div>
                     </div>
 
-                    <div class="flex justify-end gap-4">
+                    <!-- Global Buttons -->
+                    <div class="flex justify-end gap-3 my-2 mx-5">
                         <button
                             @click="addPlacement"
-                            class="bg-blue-500 text-white px-4 py-2 rounded"
+                            class="bg-blue-500 text-white px-4 py-2 rounded my-5"
                         >
                             Add Placement
                         </button>
+
                         <button
                             @click="savePlacements"
-                            class="bg-green-500 text-white px-4 py-2 rounded"
+                            class="bg-green-500 text-white px-4 py-2 rounded my-5 "
                         >
-                            Save Placements
+                            Save Placement
                         </button>
                     </div>
                 </div>

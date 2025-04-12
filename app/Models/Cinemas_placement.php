@@ -18,5 +18,8 @@ class Cinemas_placement extends Model
         'placement_colors',
         'placement_material',
         'placement_price',
+        'placement_type',
+        'placement_finishing',
+        'placement_shipping_price'
     ];
 }

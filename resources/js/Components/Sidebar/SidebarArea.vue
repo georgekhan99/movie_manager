@@ -36,6 +36,7 @@ const menuGroups = ref([
         { label: 'All Cinemas', route: 'adminpage.cinema.AllCinemas' },
         { label: 'Create Cinemas', route: 'create.cinemas.noid' },
         { label: 'My Cinemas', route: 'cinemaadmin.mycinema' },
+        { label: 'Booking Calendar', route: 'adminpage.cinema.bookingCalendar' },
        ]
       },
       {

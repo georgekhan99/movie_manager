@@ -267,6 +267,8 @@ const calculateGraceDate = (releaseDate: string): string => {
 };
 
 </script>
+
+
 <template>
   <DefaultLayout title="Cinema List">
     <div class="p-6 bg-white rounded shadow-md">
@@ -342,13 +344,13 @@ const calculateGraceDate = (releaseDate: string): string => {
               </tr>
               <template v-for="placement in cinema.placements" :key="placement.placement_id">
                 <tr class="bg-white text-gray-700 text-sm">
-                  <td class="border border-black px-4 py-3">
+                  <td class="border border-black px-4 py-3 bg-blue-200">
                     {{ placement.placement_name }}
                   </td>
-                  <td class="border border-black px-4 py-3 text-center">
+                  <td class="border border-black px-4 py-3 text-center bg-blue-200">
                     {{ placement.placement_width }} x {{ placement.placement_height }}
                   </td>
-                  <td class="border border-black px-4 py-3 text-center font-bold text-black">
+                  <td class="border border-black px-4 py-3 text-center font-bold text-black bg-blue-200">
                     {{ placement.placement_price }}
                   </td>
                   <td v-for="duration in durations" :key="duration.id" class="border border-black px-4 py-3 text-center"
