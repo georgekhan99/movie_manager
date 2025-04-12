@@ -330,29 +330,76 @@ class CinemaController extends Controller
 
     
 
+    // public function GetMovieMangagerCalendar(Request $request)
+    // {
+    //     $offset = $request->input('offset', 0);
+    //     $limit = 5;
+    
+    //     $cinemas = DB::table('cinemas')
+    //         ->join('cinema_placements', 'cinemas.id', '=', 'cinema_placements.cinema_id')
+    //         ->select('cinemas.id', 'cinemas.cinema_name')
+    //         ->distinct()
+    //         ->offset($offset * $limit)
+    //         ->limit($limit)
+    //         ->get();
+    
+    //     $calendarData = [];
+    
+    //     foreach ($cinemas as $cinema) {
+    //         $placements = DB::table('cinema_placements as cp')
+    //             ->where('cp.cinema_id', $cinema->id)
+    //             ->select('cp.id', 'cp.placement_name', 'cp.placement_width', 'cp.placement_height', 'cp.placement_price')
+    //             ->get();
+    
+    //         $formattedPlacements = [];
+    
+    //         foreach ($placements as $placement) {
+    //             $bookings = DB::table('bookings_detail as bd')
+    //                 ->where('bd.placement_id', $placement->id)
+    //                 ->leftJoin('movies as m', 'bd.movie_id', '=', 'm.id')
+    //                 ->select(
+    //                     'bd.duration_id',
+    //                     'bd.booking_status as status',
+    //                     'm.movies_name as movie_name',
+    //                     'm.id as movie_id',
+    //                     'm.movies_release_date'
+    //                 )
+    //                 ->get();
+    
+    //             $formattedPlacements[] = [
+    //                 'placement_id' => $placement->id,
+    //                 'placement_name' => $placement->placement_name,
+    //                 'width' => $placement->placement_width,
+    //                 'height' => $placement->placement_height,
+    //                 'price' => $placement->placement_price,
+    //                 'bookings' => $bookings
+    //             ];
+    //         }
+    
+    //         $calendarData[] = [
+    //             'group_name' => $cinema->cinema_name,
+    //             'placements' => $formattedPlacements
+    //         ];
+    //     }
+    
+    //     return Inertia::render('MoviesManager/MovieManagerCalendar', [
+    //         'calendarData' => $calendarData,
+    //         'currentOffset' => $offset,
+    //     ]);
+    // }
+
     public function GetMovieMangagerCalendar(Request $request)
     {
-        $offset = intval($request->input('offset', 0));
-        $today = Carbon::now()->startOfDay()->addDays($offset * 7); // paginate ทีละ 7 วัน
-    
-        $durations = collect();
-        for ($i = 0; $i < 6; $i++) {
-            $start = $today->copy()->addDays($i * 14);
-            $end = $start->copy()->addDays(13);
-            $deadline = $start->copy()->subDay();
-    
-            $durations->push([
-                'id' => $i + 1,
-                'start_date' => $start->toDateString(),
-                'end_date' => $end->toDateString(),
-                'production_deadline' => $deadline->toDateString(),
-            ]);
-        }
+        $page = (int) $request->input('offset', 0);
+        $limit = 10;
+        $offset = $page * $limit;
     
         $cinemas = DB::table('cinemas')
             ->join('cinema_placements', 'cinemas.id', '=', 'cinema_placements.cinema_id')
             ->select('cinemas.id', 'cinemas.cinema_name')
             ->distinct()
+            ->offset($offset)
+            ->limit($limit)
             ->get();
     
         $calendarData = [];
@@ -360,7 +407,13 @@ class CinemaController extends Controller
         foreach ($cinemas as $cinema) {
             $placements = DB::table('cinema_placements as cp')
                 ->where('cp.cinema_id', $cinema->id)
-                ->select('cp.id', 'cp.placement_name', 'cp.placement_width', 'cp.placement_height', 'cp.placement_price')
+                ->select(
+                    'cp.id',
+                    'cp.placement_name',
+                    'cp.placement_width',
+                    'cp.placement_height',
+                    'cp.placement_price'
+                )
                 ->get();
     
             $formattedPlacements = [];
@@ -369,12 +422,13 @@ class CinemaController extends Controller
                 $bookings = DB::table('bookings_detail as bd')
                     ->where('bd.placement_id', $placement->id)
                     ->leftJoin('movies as m', 'bd.movie_id', '=', 'm.id')
+                    ->leftJoin('durations as d', 'bd.duration_id', '=', 'd.id')
                     ->select(
                         'bd.duration_id',
                         'bd.booking_status as status',
                         'm.movies_name as movie_name',
                         'm.id as movie_id',
-                        'm.movies_release_date'
+                        'd.start_date as duration_start_date'
                     )
                     ->get();
     
@@ -384,7 +438,7 @@ class CinemaController extends Controller
                     'width' => $placement->placement_width,
                     'height' => $placement->placement_height,
                     'price' => $placement->placement_price,
-                    'bookings' => $bookings
+                    'bookings' => $bookings,
                 ];
             }
     
@@ -395,16 +449,10 @@ class CinemaController extends Controller
         }
     
         return Inertia::render('MoviesManager/MovieManagerCalendar', [
-            'durations' => $durations,
             'calendarData' => $calendarData,
-            'currentOffset' => $offset
+            'currentOffset' => $page,
         ]);
     }
-    
-
-    
-    
-    
     
     
     
