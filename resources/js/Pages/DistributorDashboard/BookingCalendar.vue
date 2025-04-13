@@ -90,35 +90,35 @@ const submitBookings = async () => {
 };
 
 // Ensure correct grouping of placements & durations
-// const getPlacementDurations = computed(() => {
-//   return page.props.PlacementList.map(cinema => ({
-//     cinema_name: cinema.cinema_name,
-//     placements: cinema.placements.reduce((acc, placement) => {
-//       const existingPlacement = acc.find((p: any) => p.placement_id === placement.placement_id);
+const getPlacementDurations = computed(() => {
+  return page.props.PlacementList.map(cinema => ({
+    cinema_name: cinema.cinema_name,
+    placements: cinema.placements.reduce((acc, placement) => {
+      const existingPlacement = acc.find((p: any) => p.placement_id === placement.placement_id);
 
-//       const durationInfo = {
-//         duration_id: placement.duration_id,
-//         is_confirmed: placement.is_confirmed,
-//         accepted_movie: placement.accepted_movie,
-//       };
+      const durationInfo = {
+        duration_id: placement.duration_id,
+        is_confirmed: placement.is_confirmed,
+        accepted_movie: placement.accepted_movie,
+      };
 
-//       if (existingPlacement) {
-//         existingPlacement.durations.push(durationInfo);
-//       } else {
-//         acc.push({
-//           placement_id: placement.placement_id,
-//           placement_name: placement.placement_name,
-//           placement_width: placement.placement_width,
-//           placement_height: placement.placement_height,
-//           placement_price: placement.placement_price,
-//           durations: [durationInfo],
-//         });
-//       }
+      if (existingPlacement) {
+        existingPlacement.durations.push(durationInfo);
+      } else {
+        acc.push({
+          placement_id: placement.placement_id,
+          placement_name: placement.placement_name,
+          placement_width: placement.placement_width,
+          placement_height: placement.placement_height,
+          placement_price: placement.placement_price,
+          durations: [durationInfo],
+        });
+      }
 
-//       return acc;
-//     }, [] as any[])
-//   }));
-// });
+      return acc;
+    }, [] as any[])
+  }));
+});
 
 const selectedBrand = ref<string | null>(null);
 
@@ -166,29 +166,32 @@ const selectedMovieId = ref<number | null>(null);
 const selectedPlacementDuration = ref<{ placementId: number; durationId: number } | null>(null);
 
 const OpenChangMovieModal = (placement: any, durationId: number) => {
+  selectedMovieId.value = null; // ✅ Reset ก่อนเปิด modal
   selectedChange.value = {
     placementId: placement.placement_id,
     durationId: durationId,
   };
   isMovieChangeOpen.value = true;
 };
-
 const currentAcceptedMovieName = computed(() => {
   if (!selectedChange.value) return null;
 
-  const placement = getPlacementDurations.value
-    .flatMap(cinema => cinema.placements)
-    .find(p => p.placement_id === selectedChange.value.placementId);
+  const allPlacements = getPlacementDurations.value?.flatMap(cinema => cinema.placements) || [];
 
-  const match = placement?.durations.find(
-    (d) => d.duration_id === selectedChange.value.durationId
+  const placement = allPlacements.find(
+    p => p.placement_id === selectedChange.value!.placementId
+  );
+
+  if (!placement) return null;
+
+  const match = placement.durations.find(
+    d => d.duration_id === selectedChange.value!.durationId
   );
 
   return match?.accepted_movie && match.accepted_movie !== "N/A"
     ? match.accepted_movie
     : null;
 });
-
 
 const changeConfirmedMovie = async () => {
   if (!selectedChange.value || !selectedMovieId.value) {
@@ -222,8 +225,10 @@ const changeConfirmedMovie = async () => {
 };
 
 const CloseChangMovieModal = () => {
+  selectedChange.value = null;
+  selectedMovieId.value = null;
   isMovieChangeOpen.value = false;
-}
+};
 
 const getWeekNumber = (dateString: string): number => {
   const date = new Date(dateString);

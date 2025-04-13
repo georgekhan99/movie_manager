@@ -11,6 +11,7 @@ use App\Models\Company;
 use App\Models\Placement;
 use App\Models\bookings_detail;
 use App\Models\Duration;
+use App\Models\movies;
 use Carbon\Carbon;
 
 class CinemaController extends Controller
@@ -328,13 +329,13 @@ class CinemaController extends Controller
 
 
 
-    
+
 
     // public function GetMovieMangagerCalendar(Request $request)
     // {
     //     $offset = $request->input('offset', 0);
     //     $limit = 5;
-    
+
     //     $cinemas = DB::table('cinemas')
     //         ->join('cinema_placements', 'cinemas.id', '=', 'cinema_placements.cinema_id')
     //         ->select('cinemas.id', 'cinemas.cinema_name')
@@ -342,17 +343,17 @@ class CinemaController extends Controller
     //         ->offset($offset * $limit)
     //         ->limit($limit)
     //         ->get();
-    
+
     //     $calendarData = [];
-    
+
     //     foreach ($cinemas as $cinema) {
     //         $placements = DB::table('cinema_placements as cp')
     //             ->where('cp.cinema_id', $cinema->id)
     //             ->select('cp.id', 'cp.placement_name', 'cp.placement_width', 'cp.placement_height', 'cp.placement_price')
     //             ->get();
-    
+
     //         $formattedPlacements = [];
-    
+
     //         foreach ($placements as $placement) {
     //             $bookings = DB::table('bookings_detail as bd')
     //                 ->where('bd.placement_id', $placement->id)
@@ -365,7 +366,7 @@ class CinemaController extends Controller
     //                     'm.movies_release_date'
     //                 )
     //                 ->get();
-    
+
     //             $formattedPlacements[] = [
     //                 'placement_id' => $placement->id,
     //                 'placement_name' => $placement->placement_name,
@@ -375,13 +376,13 @@ class CinemaController extends Controller
     //                 'bookings' => $bookings
     //             ];
     //         }
-    
+
     //         $calendarData[] = [
     //             'group_name' => $cinema->cinema_name,
     //             'placements' => $formattedPlacements
     //         ];
     //     }
-    
+
     //     return Inertia::render('MoviesManager/MovieManagerCalendar', [
     //         'calendarData' => $calendarData,
     //         'currentOffset' => $offset,
@@ -393,7 +394,13 @@ class CinemaController extends Controller
         $page = (int) $request->input('offset', 0);
         $limit = 10;
         $offset = $page * $limit;
-    
+
+        //Get All movies
+        $movies = DB::table('movies')->select('id', 'movies_name')->get();
+        $selectedMovieId = $request->input('movie_id');
+
+
+
         $cinemas = DB::table('cinemas')
             ->join('cinema_placements', 'cinemas.id', '=', 'cinema_placements.cinema_id')
             ->select('cinemas.id', 'cinemas.cinema_name')
@@ -401,9 +408,9 @@ class CinemaController extends Controller
             ->offset($offset)
             ->limit($limit)
             ->get();
-    
+
         $calendarData = [];
-    
+
         foreach ($cinemas as $cinema) {
             $placements = DB::table('cinema_placements as cp')
                 ->where('cp.cinema_id', $cinema->id)
@@ -415,11 +422,11 @@ class CinemaController extends Controller
                     'cp.placement_price'
                 )
                 ->get();
-    
+
             $formattedPlacements = [];
-    
+
             foreach ($placements as $placement) {
-                $bookings = DB::table('bookings_detail as bd')
+                $bookingsQuery  = DB::table('bookings_detail as bd')
                     ->where('bd.placement_id', $placement->id)
                     ->leftJoin('movies as m', 'bd.movie_id', '=', 'm.id')
                     ->leftJoin('durations as d', 'bd.duration_id', '=', 'd.id')
@@ -429,9 +436,14 @@ class CinemaController extends Controller
                         'm.movies_name as movie_name',
                         'm.id as movie_id',
                         'd.start_date as duration_start_date'
-                    )
-                    ->get();
-    
+                    );
+
+                if ($selectedMovieId) {
+                    $bookingsQuery->where('m.id', $selectedMovieId);
+                }
+
+                $bookings = $bookingsQuery->get();
+
                 $formattedPlacements[] = [
                     'placement_id' => $placement->id,
                     'placement_name' => $placement->placement_name,
@@ -441,19 +453,18 @@ class CinemaController extends Controller
                     'bookings' => $bookings,
                 ];
             }
-    
+
             $calendarData[] = [
                 'group_name' => $cinema->cinema_name,
                 'placements' => $formattedPlacements
             ];
         }
-    
+
         return Inertia::render('MoviesManager/MovieManagerCalendar', [
             'calendarData' => $calendarData,
             'currentOffset' => $page,
+            'selectedMovieId' => $selectedMovieId,
+            'movies' => $movies,
         ]);
     }
-    
-    
-    
 }

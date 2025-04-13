@@ -1,87 +1,62 @@
 <script setup lang="ts">
 import { ref, computed, watch } from "vue";
 import DefaultLayout from "@/Layouts/DefaultLayout.vue";
-import { usePage, router } from "@inertiajs/vue3";
+import { router, usePage } from "@inertiajs/vue3";
 import dayjs from "dayjs";
 import isSameOrAfter from "dayjs/plugin/isSameOrAfter";
 import isSameOrBefore from "dayjs/plugin/isSameOrBefore";
-
 dayjs.extend(isSameOrAfter);
 dayjs.extend(isSameOrBefore);
 
 const page = usePage();
 const calendarData = ref(page.props.calendarData || []);
+const movieList = ref(page.props.movies || []);
 const currentOffset = ref(parseInt(page.props.currentOffset) || 0);
+const selectedMovieId = ref(page.props.selectedMovieId || "");
 
 const modalVisible = ref(false);
 const selectedBookings = ref([]);
 const selectedPlacement = ref(null);
 const selectedDuration = ref(null);
 const isLoading = ref(false);
-const durations = ref([]);
 
-// const durations = computed(() => {
-//   const result = [];
-//   let start = dayjs().startOf("day").add(currentOffset.value * 7, "day");
-
-//   for (let i = 0; i < 5; i++) {
-//     const end = start.add(14, "day");
-//     const deadline = start.subtract(1, "day");
-
-//     result.push({
-//       id: i + 1,
-//       start_date: start.format("YYYY-MM-DD"),
-//       end_date: end.format("YYYY-MM-DD"),
-//       production_deadline: deadline.format("YYYY-MM-DD"),
-//     });
-
-//     start = end;
-//   }
-
-//   return result;
-// });
-
-const regenerateDurations = (offset: number) => {
+// ✅ Durations 15-day chunks with pagination (every +7 days)
+const durations = computed(() => {
   const result = [];
-  let start = dayjs().startOf("day").add(offset * 7, "day");
+  let start = dayjs().startOf("day").add(currentOffset.value * 7, "day");
 
-  for (let i = 0; i < 5; i++) {
+  for (let i = 0; i < 7; i++) {
     const end = start.add(14, "day");
     const deadline = start.subtract(1, "day");
-
     result.push({
       id: i + 1,
       start_date: start.format("YYYY-MM-DD"),
       end_date: end.format("YYYY-MM-DD"),
       production_deadline: deadline.format("YYYY-MM-DD"),
     });
-
     start = end;
   }
 
-  durations.value = result;
-};
+  return result;
+});
 
-watch(() => page.props.currentOffset, (newOffset) => {
-  currentOffset.value = parseInt(newOffset) || 0;
-  regenerateDurations(currentOffset.value);
-}, { immediate: true });
-
-const formatRange = (start, end) => `${dayjs(start).format("DD/MM")} - ${dayjs(end).format("DD/MM")}`;
+const formatRange = (start, end) =>
+  `${dayjs(start).format("DD/MM")} - ${dayjs(end).format("DD/MM")}`;
 const formatDeadline = (deadline) => dayjs(deadline).format("DD/MM");
 
 const getBookings = (placement, duration) => {
-  return (placement.bookings || []).filter(b => {
+  return (placement.bookings || []).filter((b) => {
     if (!b.duration_start_date) return false;
-    const release = dayjs(b.duration_start_date);
-    return release.isSameOrAfter(dayjs(duration.start_date)) &&
-           release.isBefore(dayjs(duration.end_date));
+    const d = dayjs(b.duration_start_date);
+    return d.isSameOrAfter(duration.start_date) &&
+           d.isSameOrBefore(duration.end_date) &&
+           (!selectedMovieId.value || b.movie_id == selectedMovieId.value);
   });
 };
 
 const cellColor = (placement, duration) => {
   const bookings = getBookings(placement, duration);
-  if (bookings.some(b => b.status === "accepted")) return "bg-green-200";
+  if (bookings.some((b) => b.status === "accepted")) return "bg-green-200";
   if (bookings.length) return "bg-yellow-100";
   return "bg-white";
 };
@@ -100,16 +75,24 @@ const confirmBooking = (booking) => {
 
 const goToOffset = (offset) => {
   isLoading.value = true;
-  router.get(route("adminpage.cinema.bookingCalendar"), { offset }, {
-    preserveState: true,
+  router.get(route("adminpage.cinema.bookingCalendar"), {
+    offset,
+    movie_id: selectedMovieId.value
+  }, {
     preserveScroll: true,
-    onSuccess: () => {
+    onFinish: () => {
       isLoading.value = false;
     }
   });
 };
-</script>
 
+watch(selectedMovieId, (val) => {
+  router.get(route("adminpage.cinema.bookingCalendar"), {
+    movie_id: val,
+    offset: 0,
+  }, { preserveState: false });
+});
+</script>
 
 <template>
   <DefaultLayout title="Cinema Booking Calendar">
@@ -118,16 +101,28 @@ const goToOffset = (offset) => {
         <span class="text-lg font-semibold text-gray-600">Loading...</span>
       </div>
 
-      <h1 class="text-xl font-bold mb-4">🎥 Booking Calendar</h1>
+      <div class="flex justify-between items-center mb-4">
+        <h1 class="text-xl font-bold">Booking Calendar</h1>
+      </div>
 
-      <!-- 🔄 Paginate -->
-      <div class="flex justify-end gap-4 mb-3">
-        <button class="text-sm px-3 py-1 bg-gray-200 rounded" @click="goToOffset(currentOffset - 1)">
-          ← Previous
-        </button>
-        <button class="text-sm px-3 py-1 bg-gray-200 rounded" @click="goToOffset(currentOffset + 1)">
-          Next →
-        </button>
+      <div class="flex justify-between gap-4 mb-3 my-5">
+        <div>
+          <select v-model="selectedMovieId" class="border border-gray-300 px-2 py-1 rounded text-sm">
+          <option value=""> All Movies</option>
+          <option v-for="movie in movieList" :key="movie.id" :value="movie.id">
+            {{ movie.movies_name }}
+          </option>
+        </select>
+        </div>
+
+        <div class="space-x-3">
+          <button class="text-sm px-3 py-1 bg-gray-200 rounded" @click="goToOffset(currentOffset - 1)">
+            ← Previous
+          </button>
+          <button class="text-sm px-3 py-1 bg-gray-200 rounded" @click="goToOffset(currentOffset + 1)">
+            Next →
+          </button>
+        </div>
       </div>
 
       <div class="overflow-x-auto">
@@ -146,19 +141,17 @@ const goToOffset = (offset) => {
             <template v-for="group in calendarData" :key="group.group_name">
               <tr>
                 <td :colspan="2 + durations.length" class="bg-gray-100 px-3 py-2 font-bold">
-                  🎬 {{ group.group_name }}
+                   {{ group.group_name }}
                 </td>
               </tr>
               <tr v-for="placement in group.placements" :key="placement.placement_id">
-                <td class="border px-2 py-1">{{ placement.placement_name }}</td>
-                <td class="border px-2 py-1 text-center">{{ placement.width }} x {{ placement.height }}</td>
-                <td v-for="d in durations" :key="d.id"
-                    :class="['border px-2 py-1 text-center', cellColor(placement, d)]">
+                <td class="border px-4 py-3">{{ placement.placement_name }}</td>
+                <td class="border px-4 py-3 text-center">{{ placement.width }} x {{ placement.height }}</td>
+                <td v-for="d in durations" :key="d.id" :class="['border px-4 py-3 text-center', cellColor(placement, d)]">
                   <template v-if="getBookings(placement, d).length">
                     <div v-for="booking in getBookings(placement, d)" :key="booking.movie_id"
                       class="truncate cursor-pointer" @click="openModal(placement, d)">
-                      {{ booking.movie_name }}
-                      <span v-if="booking.status === 'pending'">(รอ)</span>
+                      {{ booking.movie_name }}<span v-if="booking.status === 'pending'">(รอ)</span>
                     </div>
                   </template>
                   <template v-else>
@@ -171,7 +164,7 @@ const goToOffset = (offset) => {
         </table>
       </div>
 
-      <!-- ✅ Modal -->
+      <!-- Modal -->
       <div v-if="modalVisible" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
         <div class="bg-white w-[400px] p-6 rounded shadow">
           <h2 class="text-lg font-bold mb-4">Confirm Booking</h2>
