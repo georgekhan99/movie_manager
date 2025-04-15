@@ -431,6 +431,7 @@ class CinemaController extends Controller
                     ->leftJoin('movies as m', 'bd.movie_id', '=', 'm.id')
                     ->leftJoin('durations as d', 'bd.duration_id', '=', 'd.id')
                     ->select(
+                        'bd.id as booking_detail_id',
                         'bd.duration_id',
                         'bd.booking_status as status',
                         'm.movies_name as movie_name',
@@ -467,4 +468,10 @@ class CinemaController extends Controller
             'movies' => $movies,
         ]);
     }
+
+    public function ConfirmBookingCinemaCalendar(Request $request){
+        
+
+    }
+
 }

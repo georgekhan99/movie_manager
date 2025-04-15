@@ -56,7 +56,7 @@ const getBookings = (placement, duration) => {
 
 const cellColor = (placement, duration) => {
   const bookings = getBookings(placement, duration);
-  if (bookings.some((b) => b.status === "accepted")) return "bg-green-200";
+  if (bookings.some((b) => b.status === "accepted")) return "bg-green-300";
   if (bookings.length) return "bg-yellow-100";
   return "bg-white";
 };
@@ -106,7 +106,8 @@ watch(selectedMovieId, (val) => {
       </div>
 
       <div class="flex justify-between gap-4 mb-3 my-5">
-        <div>
+        <div class="space-x-2">
+          <label for="movieFilter" class="text-md font-medium text-gray-700">Movie:</label>
           <select v-model="selectedMovieId" class="border border-gray-300 px-2 py-1 rounded text-sm">
           <option value=""> All Movies</option>
           <option v-for="movie in movieList" :key="movie.id" :value="movie.id">
@@ -145,13 +146,13 @@ watch(selectedMovieId, (val) => {
                 </td>
               </tr>
               <tr v-for="placement in group.placements" :key="placement.placement_id">
-                <td class="border px-4 py-3">{{ placement.placement_name }}</td>
-                <td class="border px-4 py-3 text-center">{{ placement.width }} x {{ placement.height }}</td>
+                <td class="border px-4 py-3 text-black">{{ placement.placement_name }}</td>
+                <td class="border px-4 py-3 text-center text-black">{{ placement.width }} x {{ placement.height }}</td>
                 <td v-for="d in durations" :key="d.id" :class="['border px-4 py-3 text-center', cellColor(placement, d)]">
                   <template v-if="getBookings(placement, d).length">
                     <div v-for="booking in getBookings(placement, d)" :key="booking.movie_id"
                       class="truncate cursor-pointer" @click="openModal(placement, d)">
-                      {{ booking.movie_name }}<span v-if="booking.status === 'pending'">(รอ)</span>
+                      {{ booking.movie_name }}
                     </div>
                   </template>
                   <template v-else>
