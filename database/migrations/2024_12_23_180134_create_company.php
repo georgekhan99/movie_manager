@@ -16,7 +16,7 @@ return new class extends Migration
             $table->foreignId('label_id')->nullable()->constrained('label');
             $table->string('company_legalname')->nullable();
             $table->string('company_brand_name')->nullable();
-            $table->string('company_organization')->nullable();
+            $table->string('company_initials')->nullable();
             $table->string('company_parent_company')->nullable();
             $table->string('company_CVR')->nullable();
             $table->string('company_address_1')->nullable();

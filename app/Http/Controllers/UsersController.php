@@ -95,6 +95,7 @@ class UsersController extends Controller
         if ($request->Password) {
             $user->password = bcrypt($request->Password);
         }
+        
         $user->save();
         return redirect()->route('adminpage.userlist')->with('success', 'User updated successfully.');
     }

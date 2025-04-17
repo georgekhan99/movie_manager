@@ -13,7 +13,7 @@ class Company extends Model
         'label_id',
         'company_legalname',
         'company_brand_name',
-        'company_organization',
+        'company_initials',
         'company_parent_company',
         'company_CVR',
         'company_address_1',

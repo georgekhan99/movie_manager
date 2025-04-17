@@ -1,85 +1,133 @@
 <script setup lang="ts">
 import DefaultLayout from "../../../Layouts/DefaultLayout.vue";
-import { router, useForm, Link  } from "@inertiajs/vue3";
+import { router, useForm, Link } from "@inertiajs/vue3";
 import PrimaryButton from "@/Components/PrimaryButton.vue";
 import { Icon } from "../../../../Constraint/ContrantIcon";
-import { onMounted, onUnmounted, ref,watch } from "vue";
+import { onMounted, onUnmounted, ref, watch } from "vue";
 import Modal from "@/Components/Modal.vue";
+import { toast } from "vue3-toastify";
+import "vue3-toastify/dist/index.css";
+
+
 const props = defineProps({
     CompanyData: Object,
     labels: Object,
-    cinemasData: Object
+    cinemasData: Object,
 });
 
-
 const showModal = ref(false);
-let Addusers = ref({});
+let Addusers = ref([]);
 let attachedUsers = ref([]);
 
 const getAttachedUsers = async (companyId: number) => {
     try {
         if (!companyId) {
-            console.error('Invalid company ID:', companyId);
+            console.error("Invalid company ID:", companyId);
             return;
         }
-        
-        const response = await fetch(`/dashboard/get/company/${companyId}/users`, {
-            headers: {
-                'Accept': 'application/json',
-                'X-Requested-With': 'XMLHttpRequest'
+
+        const response = await fetch(
+            `/dashboard/get/company/${companyId}/users`,
+            {
+                headers: {
+                    Accept: "application/json",
+                    "X-Requested-With": "XMLHttpRequest",
+                },
             }
-        });
-        
+        );
+
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
-        
+
         const data = await response.json();
         attachedUsers.value = data;
-        
     } catch (error) {
-        console.error('Error fetching users:', error);
+        console.error("Error fetching users:", error);
     }
 };
 
-watch(() => props.CompanyData?.id, (newId) => {
-    if (newId) {
-        getAttachedUsers(newId);
-    }
-}, { immediate: true });
+watch(
+    () => props.CompanyData?.id,
+    (newId) => {
+        if (newId) {
+            getAttachedUsers(newId);
+        }
+    },
+    { immediate: true }
+);
 
 onMounted(() => {
-    console.log('Company ID on mount:', props.CompanyData.id); // Debug log
+    console.log("Company ID on mount:", props.CompanyData.id); // Debug log
     if (props.CompanyData && props.CompanyData.id) {
         getAttachedUsers(props.CompanyData.id);
     }
 });
 
-onUnmounted(()=> {
+onUnmounted(() => {
     attachedUsers.value = [];
-})
+});
 
+// const openModal = async () => {
+//     showModal.value = true;
+//     let users = await fetch("/dashboard/company/addusers");
+//     Addusers.value = await users.json();
+// };
+
+/**
+ * แปลง label_name → role_name สำหรับดึง user ตามประเภทบริษัท
+ */
+function getRoleFromLabel(labelName: string): string {
+    switch (labelName) {
+        case "Distributor":
+            return "Distribution Manager";
+        case "Cinema":
+            return "Cinema Manager";
+        default:
+            return "";
+    }
+}
+
+/**
+ * ดึง user ที่ตรงกับ label_name ของบริษัทนั้น ๆ
+ */
 const openModal = async () => {
     showModal.value = true;
-    let users = await fetch("/dashboard/company/addusers");
-    Addusers.value = await users.json();
+
+    const labelName = props.CompanyData?.label_name || "";
+    const userRole = getRoleFromLabel(labelName);
+
+    console.log("🔍 Fetching users with role:", userRole);
+
+    if (!userRole) {
+        Addusers.value = [];
+        return;
+    }
+
+    const response = await fetch(
+        `/dashboard/company/addusers?role=${encodeURIComponent(userRole)}`
+    );
+    Addusers.value = await response.json();
 };
+
 const closeModal = () => {
     showModal.value = false;
 };
 
 const AttachUsertoCompany = async ([companyId, userId]) => {
-    try{
-        await router.post(route('add.company_users', {
-            company_id: companyId,
-            users_id: userId
-        }))
-        closeModal(); 
+    try {
+        await router.post(
+            route("add.company_users", {
+                company_id: companyId,
+                users_id: userId,
+            })
+        );
+        closeModal();
         getAttachedUsers(props.CompanyData.id);
-    }catch(error){
-        console.log(error)
-    }finally{
-        closeModal(); 
+    } catch (error) {
+        console.log(error);
+    } finally {
+        closeModal();
     }
 };
 
@@ -87,7 +135,7 @@ const form = useForm({
     id: props.CompanyData.id,
     legalName: props.CompanyData.legalName,
     BrandName: props.CompanyData.BrandName,
-    Organization: props.CompanyData.Organization,
+    Initials: props.CompanyData.Initials,
     Parent_Company: props.CompanyData.Parent_Company,
     CVR: props.CompanyData.CVR,
     address_1: props.CompanyData.address_1,
@@ -97,8 +145,32 @@ const form = useForm({
     State: props.CompanyData.State,
     Country: props.CompanyData.Country,
     label_name: props.CompanyData.label_name,
-    lebel_id: props.CompanyData.label_id,
+    lebel_id: props.CompanyData["label.id"],
 });
+
+
+const updateCompany = () => {
+    form.post(route("update.company"), {
+        preserveScroll: true,
+        onSuccess: () => {
+            toast.success("Data updated successfully!", {
+                autoClose: 2000,
+                position: "top-right",
+                theme: "colored",
+            });
+        },
+        onError: (errors) => {
+            toast.error("❌ Failed to update data. Please check your input.", {
+                autoClose: 3000,
+                position: "top-right",
+                theme: "colored",
+            });
+            console.error(errors);
+        },
+    });
+};
+
+
 </script>
 
 <template>
@@ -131,7 +203,7 @@ const form = useForm({
                     Create Company form
                 </h3>
             </div>
-            <form>
+            <form @submit.prevent="updateCompany">
                 <div class="p-6.5">
                     <div class="mb-4.5 flex flex-col gap-6 xl:flex-row">
                         <div class="w-full xl:w-1/2">
@@ -140,6 +212,7 @@ const form = useForm({
                             >
                                 Label
                             </label>
+
                             <select v-model="form.lebel_id" class="input-style">
                                 <option
                                     v-for="lable in props.labels"
@@ -183,10 +256,10 @@ const form = useForm({
                             <label
                                 class="mb-3 block text-sm font-medium text-black dark:text-white"
                             >
-                                Organization
+                                Initials
                             </label>
                             <input
-                                v-model="form.Organization"
+                                v-model="form.Initials"
                                 type="text"
                                 class="input-style"
                             />
@@ -363,7 +436,8 @@ const form = useForm({
                     class="w-full flex items-center justify-between border-b border-stroke"
                 >
                     <p class="text-xl font-medium mb-2">Sub Company</p>
-                    <Link :href="route('adminpage.dashboard')"
+                    <Link
+                        :href="route('adminpage.dashboard')"
                         class="w-30 mb-2 flex w-2xl justify-center rounded bg-primary p-3 font-medium text-gray hover:bg-opacity-70"
                     >
                         <div v-html="Icon.Plus"></div>
@@ -443,7 +517,10 @@ const form = useForm({
                     </div>
                 </div>
 
-                <div v-for="user in attachedUsers" class="grid grid-cols-6 border-t border-stroke py-4.5 px-4 dark:border-strokedark sm:grid-cols-8 md:px-6 2xl:px-7.5">
+                <div
+                    v-for="user in attachedUsers"
+                    class="grid grid-cols-6 border-t border-stroke py-4.5 px-4 dark:border-strokedark sm:grid-cols-8 md:px-6 2xl:px-7.5"
+                >
                     <div class="col-span-3 flex items-center">
                         <div
                             class="flex flex-col gap-4 sm:flex-row sm:items-center"
@@ -451,7 +528,7 @@ const form = useForm({
                             <p
                                 class="text-md font-medium text-black dark:text-white"
                             >
-                                {{ user.name }}  {{ user.surname }}
+                                {{ user.name }} {{ user.surname }}
                             </p>
                         </div>
                     </div>
@@ -459,19 +536,24 @@ const form = useForm({
                         <p
                             class="text-md font-medium text-black dark:text-white"
                         >
-                        {{ user.role_name }}
+                            {{ user.role_name }}
                         </p>
                     </div>
                     <div class="col-span-1 flex items-centers">
-                        <Link preserve-scroll :href="`/dashboard/delete/company/${user.c_id}/users`" as="button"  class="text-md font-medium text-black dark:text-white hover:text-primary cursor-pointer">
-                            <div v-html="Icon.Trash" /> 
+                        <Link
+                            preserve-scroll
+                            :href="`/dashboard/delete/company/${user.c_id}/users`"
+                            as="button"
+                            class="text-md font-medium text-black dark:text-white hover:text-primary cursor-pointer"
+                        >
+                            <div v-html="Icon.Trash" />
                         </Link>
                     </div>
                 </div>
             </div>
-            
+
             <!-- Cinema -->
-             <template></template>
+            <template></template>
             <div class="p-6.5">
                 <div
                     class="w-full flex items-center justify-between border-b border-stroke"
@@ -496,7 +578,10 @@ const form = useForm({
                     </div>
                 </div>
 
-                <div v-for="cinema in cinemasData" class="grid grid-cols-6 border-t border-stroke py-4.5 px-4 dark:border-strokedark sm:grid-cols-8 md:px-6 2xl:px-7.5">
+                <div
+                    v-for="cinema in cinemasData"
+                    class="grid grid-cols-6 border-t border-stroke py-4.5 px-4 dark:border-strokedark sm:grid-cols-8 md:px-6 2xl:px-7.5"
+                >
                     <div class="col-span-3 flex items-center">
                         <div
                             class="flex flex-col gap-4 sm:flex-row sm:items-center"
@@ -504,7 +589,7 @@ const form = useForm({
                             <p
                                 class="text-md font-medium text-black dark:text-white"
                             >
-                                {{ cinema.cinema_name }} 
+                                {{ cinema.cinema_name }}
                             </p>
                         </div>
                     </div>
@@ -516,7 +601,6 @@ const form = useForm({
                 </div>
             </div>
 
-    
             <!-- End Company User -->
             <!-- Modal Open -->
             <Modal :show="showModal">
@@ -638,7 +722,6 @@ const form = useForm({
                     </div>
 
                     <div
-                     
                         class="grid grid-cols-6 border-t border-stroke py-4.5 px-4 dark:border-strokedark sm:grid-cols-8 md:px-6 2xl:px-7.5"
                     >
                         <div class="col-span-3 flex items-center">
@@ -648,7 +731,7 @@ const form = useForm({
                                 <p
                                     class="text-md font-medium text-black dark:text-white"
                                 >
-                                   Company_1
+                                    Company_1
                                 </p>
                             </div>
                         </div>
@@ -656,12 +739,11 @@ const form = useForm({
                             <p
                                 class="text-md font-medium text-black dark:text-white"
                             >
-                               Cinema
+                                Cinema
                             </p>
                         </div>
                         <div class="col-span-1 flex items-center">
                             <button
-
                                 class="w-10 flex w-2xl justify-center rounded bg-primary p-3 font-medium text-gray hover:bg-opacity-70"
                             >
                                 <div>

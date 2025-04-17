@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref, computed } from "vue";
 import DefaultLayout from "../../Layouts/DefaultLayout.vue";
 import { router } from "@inertiajs/vue3";
 import DialogModal from "@/Components/DialogModal.vue";
-defineProps({
+const props = defineProps({
     movie_list: Object,
     company_list: Object,
 });
@@ -40,6 +40,13 @@ const HandlerSaveMovie = async () => {
         console.log("error:", error);
     }
 };
+
+const searchQuery = ref("");
+const filteredMovies = computed(() => {
+  return props.movie_list.filter((movie: any) =>
+    movie.movies_name.toLowerCase().includes(searchQuery.value.toLowerCase())
+  );
+});
 
 const HandleDeleteMovie = async (id) => {
     try {
@@ -128,7 +135,8 @@ const HandleDeleteMovie = async (id) => {
             <div class="col-span-3 px-4">
                 <input
                     type="text"
-                    placeholder="Search by username"
+                    placeholder="Search by Movie Name"
+                    v-model="searchQuery"
                     class="w-full h-12 px-5 rounded border-[1.5px] border-stroke bg-transparent px-5 py-3 font-normal text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary"
                 />
             </div>
@@ -182,7 +190,7 @@ const HandleDeleteMovie = async (id) => {
 
             <!-- Table Rows -->
             <div
-                v-for="(movie, index) in movie_list"
+                v-for="(movie, index) in filteredMovies"
                 :key="movie.id"
                 class="grid grid-cols-6 border-t border-stroke py-4.5 px-4 dark:border-strokedark sm:grid-cols-8 md:px-6 2xl:px-7.5"
             >

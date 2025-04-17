@@ -14,7 +14,7 @@ const form = useForm({
     label_name: '',
     Legalname :'',
     Brandname: '',
-    Organization: '',
+    Initials: '',
     ParentCompany: '',
     CVR:'',
     Address_1:'',
@@ -116,10 +116,10 @@ onMounted(() => {
                             <label
                                 class="mb-3 block text-sm font-medium text-black dark:text-white"
                             >
-                                Organization
+                                Initials
                             </label>
                             <input
-                                v-model="form.Organization"
+                                v-model="form.Initials"
                                 type="text"
                                 class="w-full rounded border-[1.5px] border-stroke bg-transparent px-5 py-3 font-normal text-black outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary"
                             />

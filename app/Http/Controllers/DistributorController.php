@@ -37,17 +37,18 @@ class DistributorController extends Controller
         }
     }
 
-    public function EditMovie(Request $request){
-        try{
-           $id = $request->id;
-           $movie = movies::where('id', $id)->first();
-           $movie->update([
-            'movies_name' => $request->movies_name,
-            'company_id' => $request->company_id,
-            'movies_release_date' => $request->movies_release_date,
-           ]);
-           return redirect()->back()->with(['Success']);
-        }catch(\Exception $e){
+    public function EditMovie(Request $request)
+    {
+        try {
+            $id = $request->id;
+            $movie = movies::where('id', $id)->first();
+            $movie->update([
+                'movies_name' => $request->movies_name,
+                'company_id' => $request->company_id,
+                'movies_release_date' => $request->movies_release_date,
+            ]);
+            return redirect()->back()->with(['Success']);
+        } catch (\Exception $e) {
             return response()->json([
                 'message' => 'failed To Create Movie',
                 'error' => $e->getMessage(),
@@ -55,15 +56,16 @@ class DistributorController extends Controller
         }
     }
 
-    public function DeleteMovie($id){
-        try{
+    public function DeleteMovie($id)
+    {
+        try {
             $movie = movies::findOrFail($id);
             $movie->delete();
             return redirect()->back()->with(['success']);
-        }catch(\Exception $e){
+        } catch (\Exception $e) {
             return response()->json([
-            'message' => 'Failed to delete movie',
-            'error' => $e->getMessage(), 
+                'message' => 'Failed to delete movie',
+                'error' => $e->getMessage(),
             ]);
         }
     }
@@ -79,20 +81,32 @@ class DistributorController extends Controller
             ]
         );
     }
-#region ExistingCode to  get booking calendar
+
+    public function searchMovies(Request $request)
+    {
+        $keyword = $request->query('keyword');
+    
+        $movies = movies::when($keyword, function ($query, $keyword) {
+            $query->where('movies_name', 'like', '%' . $keyword . '%');
+        })->get();
+    
+        return response()->json($movies);
+    }
+
+    #region ExistingCode to  get booking calendar
     // public function BookingCalendar($id) {
     //     // Get Movie Details
     //     $MovieReleaseDate = movies::findOrFail($id, ['id', 'movies_name', 'movies_release_date']);
-    
+
     //     // Get the Current Duration
     //     $releaseDate = Duration::whereRaw('? BETWEEN start_date AND DATE_ADD(start_date, INTERVAL 14 DAY)', 
     //         [$MovieReleaseDate->movies_release_date])
     //         ->first(['id', 'start_date']);
-    
+
     //     if (!$releaseDate) {
     //         return response()->json(['error' => 'No matching duration found'], 404);
     //     }
-    
+
     //     // Fetch Placement List (Ensure `placement_id` is included)
     //     $placementList = DB::table('cinema_placements')
     //         ->join('cinemas', 'cinemas.id', '=', 'cinema_placements.cinema_id')
@@ -110,23 +124,23 @@ class DistributorController extends Controller
     //                 })->toArray()
     //             ];
     //         })->values();
-    
+
     //     // Fetch Previous 3 Durations
     //     $previousDurations = Duration::where('start_date', '<', $releaseDate->start_date)
     //         ->orderBy('start_date', 'desc')
     //         ->limit(3)
     //         ->get(['id', 'start_date']);
     //     $previousDurations = $previousDurations->reverse(); // Fix order
-    
+
     //     // Fetch Next 3 Durations
     //     $nextDurations = Duration::where('start_date', '>', $releaseDate->start_date)
     //         ->orderBy('start_date', 'asc')
     //         ->limit(3)
     //         ->get(['id', 'start_date']);
-    
+
     //     // Merge Durations to Ensure Correct Order
     //     $durations = $previousDurations->merge([$releaseDate])->merge($nextDurations);
-    
+
     //     return Inertia::render('DistributorDashboard/BookingCalendar', [
     //         'releaseDate' => $releaseDate,
     //         'PlacementList' => $placementList,
@@ -135,566 +149,568 @@ class DistributorController extends Controller
     //     ]);
     // }
 
-//     public function BookingCalendar($id)
-// {
-//     // Get Movie Details
-//     $MovieReleaseDate = movies::findOrFail($id, ['id', 'movies_name', 'movies_release_date']);
+    //     public function BookingCalendar($id)
+    // {
+    //     // Get Movie Details
+    //     $MovieReleaseDate = movies::findOrFail($id, ['id', 'movies_name', 'movies_release_date']);
 
-//     // Get the Current Duration
-//     $releaseDate = Duration::whereRaw('? BETWEEN start_date AND DATE_ADD(start_date, INTERVAL 14 DAY)', 
-//         [$MovieReleaseDate->movies_release_date])
-//         ->first(['id', 'start_date']);
+    //     // Get the Current Duration
+    //     $releaseDate = Duration::whereRaw('? BETWEEN start_date AND DATE_ADD(start_date, INTERVAL 14 DAY)', 
+    //         [$MovieReleaseDate->movies_release_date])
+    //         ->first(['id', 'start_date']);
 
-//     if (!$releaseDate) {
-//         return response()->json(['error' => 'No matching duration found'], 404);
-//     }
+    //     if (!$releaseDate) {
+    //         return response()->json(['error' => 'No matching duration found'], 404);
+    //     }
 
-//     // Fetch Placement List with Booking Status
-//     $placementList = DB::table('cinema_placements')
-//         ->join('cinemas', 'cinemas.id', '=', 'cinema_placements.cinema_id')
-//         ->leftJoin('bookings_detail as bd', function($join) {
-//             $join->on('cinema_placements.id', '=', 'bd.placement_id');
-//         })
-//         ->leftJoin('bookings as b', 'bd.booking_id', '=', 'b.id')
-//         ->select('cinemas.cinema_name', 'cinema_placements.id as placement_id', 'cinema_placements.placement_name',
-//                  DB::raw("MAX(CASE WHEN bd.booking_status = 'accepted' THEN 1 ELSE 0 END) as is_confirmed"))
-//         ->groupBy('cinemas.cinema_name', 'cinema_placements.id', 'cinema_placements.placement_name')
-//         ->get()
-//         ->groupBy('cinema_name')
-//         ->map(function ($group) {
-//             return [
-//                 'cinema_name' => $group->first()->cinema_name,
-//                 'placements' => $group->map(function ($placement) {
-//                     return [
-//                         'placement_id' => $placement->placement_id,
-//                         'placement_name' => $placement->placement_name,
-//                         'is_confirmed' => $placement->is_confirmed
-//                     ];
-//                 })->toArray()
-//             ];
-//         })->values();
+    //     // Fetch Placement List with Booking Status
+    //     $placementList = DB::table('cinema_placements')
+    //         ->join('cinemas', 'cinemas.id', '=', 'cinema_placements.cinema_id')
+    //         ->leftJoin('bookings_detail as bd', function($join) {
+    //             $join->on('cinema_placements.id', '=', 'bd.placement_id');
+    //         })
+    //         ->leftJoin('bookings as b', 'bd.booking_id', '=', 'b.id')
+    //         ->select('cinemas.cinema_name', 'cinema_placements.id as placement_id', 'cinema_placements.placement_name',
+    //                  DB::raw("MAX(CASE WHEN bd.booking_status = 'accepted' THEN 1 ELSE 0 END) as is_confirmed"))
+    //         ->groupBy('cinemas.cinema_name', 'cinema_placements.id', 'cinema_placements.placement_name')
+    //         ->get()
+    //         ->groupBy('cinema_name')
+    //         ->map(function ($group) {
+    //             return [
+    //                 'cinema_name' => $group->first()->cinema_name,
+    //                 'placements' => $group->map(function ($placement) {
+    //                     return [
+    //                         'placement_id' => $placement->placement_id,
+    //                         'placement_name' => $placement->placement_name,
+    //                         'is_confirmed' => $placement->is_confirmed
+    //                     ];
+    //                 })->toArray()
+    //             ];
+    //         })->values();
 
-//     // Fetch Previous 3 Durations
-//     $previousDurations = Duration::where('start_date', '<', $releaseDate->start_date)
-//         ->orderBy('start_date', 'desc')
-//         ->limit(3)
-//         ->get(['id', 'start_date'])->reverse();
+    //     // Fetch Previous 3 Durations
+    //     $previousDurations = Duration::where('start_date', '<', $releaseDate->start_date)
+    //         ->orderBy('start_date', 'desc')
+    //         ->limit(3)
+    //         ->get(['id', 'start_date'])->reverse();
 
-//     // Fetch Next 3 Durations
-//     $nextDurations = Duration::where('start_date', '>', $releaseDate->start_date)
-//         ->orderBy('start_date', 'asc')
-//         ->limit(3)
-//         ->get(['id', 'start_date']);
+    //     // Fetch Next 3 Durations
+    //     $nextDurations = Duration::where('start_date', '>', $releaseDate->start_date)
+    //         ->orderBy('start_date', 'asc')
+    //         ->limit(3)
+    //         ->get(['id', 'start_date']);
 
-//     $durations = $previousDurations->merge([$releaseDate])->merge($nextDurations);
+    //     $durations = $previousDurations->merge([$releaseDate])->merge($nextDurations);
 
-//     return Inertia::render('DistributorDashboard/BookingCalendar', [
-//         'releaseDate' => $releaseDate,
-//         'PlacementList' => $placementList,
-//         'durations' => $durations,
-//         'Movie_details' => $MovieReleaseDate
-//     ]);
-// }
+    //     return Inertia::render('DistributorDashboard/BookingCalendar', [
+    //         'releaseDate' => $releaseDate,
+    //         'PlacementList' => $placementList,
+    //         'durations' => $durations,
+    //         'Movie_details' => $MovieReleaseDate
+    //     ]);
+    // }
 
-// public function BookingCalendar($id)
-// {
-//     // Get Movie Details
-//     $MovieReleaseDate = movies::findOrFail($id, ['id', 'movies_name', 'movies_release_date']);
+    // public function BookingCalendar($id)
+    // {
+    //     // Get Movie Details
+    //     $MovieReleaseDate = movies::findOrFail($id, ['id', 'movies_name', 'movies_release_date']);
 
-//     // Get the Current Duration
-//     $releaseDate = Duration::whereRaw('? BETWEEN start_date AND DATE_ADD(start_date, INTERVAL 14 DAY)', 
-//         [$MovieReleaseDate->movies_release_date])
-//         ->first(['id', 'start_date']);
+    //     // Get the Current Duration
+    //     $releaseDate = Duration::whereRaw('? BETWEEN start_date AND DATE_ADD(start_date, INTERVAL 14 DAY)', 
+    //         [$MovieReleaseDate->movies_release_date])
+    //         ->first(['id', 'start_date']);
 
-//     if (!$releaseDate) {
-//         return response()->json(['error' => 'No matching duration found'], 404);
-//     }
+    //     if (!$releaseDate) {
+    //         return response()->json(['error' => 'No matching duration found'], 404);
+    //     }
 
-//     $placementList = DB::table('cinema_placements as cp')
-//     ->join('cinemas as c', 'c.id', '=', 'cp.cinema_id')
-//     ->leftJoin('bookings_detail as bd', 'cp.id', '=', 'bd.placement_id')
-//     ->leftJoin('bookings as b', 'bd.booking_id', '=', 'b.id')
-//     ->leftJoin('movies as m', 'b.movie_id', '=', 'm.id')
-//     ->select(
-//         'c.cinema_name',
-//         'cp.id as placement_id',
-//         'cp.placement_name',
-//         'cp.placement_width',
-//         'cp.placement_height',
-//         'cp.placement_price',
-//         'bd.duration_id',
-//         DB::raw("COALESCE(MAX(CASE WHEN bd.booking_status = 'accepted' THEN 1 ELSE 0 END), 0) as is_confirmed"),
-//         DB::raw("COALESCE(MAX(CASE WHEN bd.booking_status = 'accepted' THEN m.movies_name ELSE NULL END), 'Not Confirmed') as accepted_movie")
-//     )
-//     ->groupBy('c.cinema_name', 'cp.id', 'cp.placement_name', 'bd.duration_id')
-//     ->get()
-//     ->groupBy('cinema_name')
-//     ->map(function ($group) {
-//         return [
-//             'cinema_name' => $group->first()->cinema_name,
-//             'placements' => $group->map(function ($placement) {
-//                 return [
-//                     'placement_id' => $placement->placement_id, 
-//                     'placement_name' => $placement->placement_name,
-//                     'placement_width' => $placement->placement_width,
-//                     'placement_height' => $placement->placement_height,
-//                     'placement_price' => $placement->placement_price,
-//                     'duration_id' => $placement->duration_id ?? null, // Handle NULL durations
-//                     'is_confirmed' => $placement->is_confirmed,
-//                     'accepted_movie' => $placement->accepted_movie
-//                 ];
-//             })->toArray()
-//         ];
-//     })->values();
+    //     $placementList = DB::table('cinema_placements as cp')
+    //     ->join('cinemas as c', 'c.id', '=', 'cp.cinema_id')
+    //     ->leftJoin('bookings_detail as bd', 'cp.id', '=', 'bd.placement_id')
+    //     ->leftJoin('bookings as b', 'bd.booking_id', '=', 'b.id')
+    //     ->leftJoin('movies as m', 'b.movie_id', '=', 'm.id')
+    //     ->select(
+    //         'c.cinema_name',
+    //         'cp.id as placement_id',
+    //         'cp.placement_name',
+    //         'cp.placement_width',
+    //         'cp.placement_height',
+    //         'cp.placement_price',
+    //         'bd.duration_id',
+    //         DB::raw("COALESCE(MAX(CASE WHEN bd.booking_status = 'accepted' THEN 1 ELSE 0 END), 0) as is_confirmed"),
+    //         DB::raw("COALESCE(MAX(CASE WHEN bd.booking_status = 'accepted' THEN m.movies_name ELSE NULL END), 'Not Confirmed') as accepted_movie")
+    //     )
+    //     ->groupBy('c.cinema_name', 'cp.id', 'cp.placement_name', 'bd.duration_id')
+    //     ->get()
+    //     ->groupBy('cinema_name')
+    //     ->map(function ($group) {
+    //         return [
+    //             'cinema_name' => $group->first()->cinema_name,
+    //             'placements' => $group->map(function ($placement) {
+    //                 return [
+    //                     'placement_id' => $placement->placement_id, 
+    //                     'placement_name' => $placement->placement_name,
+    //                     'placement_width' => $placement->placement_width,
+    //                     'placement_height' => $placement->placement_height,
+    //                     'placement_price' => $placement->placement_price,
+    //                     'duration_id' => $placement->duration_id ?? null, // Handle NULL durations
+    //                     'is_confirmed' => $placement->is_confirmed,
+    //                     'accepted_movie' => $placement->accepted_movie
+    //                 ];
+    //             })->toArray()
+    //         ];
+    //     })->values();
 
-//     // dd($placementList);
+    //     // dd($placementList);
 
-//     // Fetch Previous 3 Durations
-//     $previousDurations = Duration::where('start_date', '<', $releaseDate->start_date)
-//         ->orderBy('start_date', 'desc')
-//         ->limit(4)
-//         ->get(['id', 'start_date'])->reverse();
+    //     // Fetch Previous 3 Durations
+    //     $previousDurations = Duration::where('start_date', '<', $releaseDate->start_date)
+    //         ->orderBy('start_date', 'desc')
+    //         ->limit(4)
+    //         ->get(['id', 'start_date'])->reverse();
 
-//     // Fetch Next 3 Durations
-//     $nextDurations = Duration::where('start_date', '>', $releaseDate->start_date)
-//         ->orderBy('start_date', 'asc')
-//         ->limit(3)
-//         ->get(['id', 'start_date']);
+    //     // Fetch Next 3 Durations
+    //     $nextDurations = Duration::where('start_date', '>', $releaseDate->start_date)
+    //         ->orderBy('start_date', 'asc')
+    //         ->limit(3)
+    //         ->get(['id', 'start_date']);
 
-//     $durations = $previousDurations->merge([$releaseDate])->merge($nextDurations);
-
-    
-    
-    
-
-//     return Inertia::render('DistributorDashboard/BookingCalendar', [
-//         'releaseDate' => $releaseDate,
-//         'PlacementList' => $placementList,
-//         'durations' => $durations,
-//         'Movie_details' => $MovieReleaseDate
-//     ]);
-// }
-#endregion
-// public function BookingCalendar($id)
-// {
-//     // Get authenticated user
-//     $user = auth()->user();
-//     $userCompanyId = $user->user_company_id ?? null; // ✅ Correct user company ID
-
-//     // Get Movie Details
-//     $MovieReleaseDate = movies::findOrFail($id, ['id', 'movies_name', 'movies_release_date', 'company_id']);
-
-//     // Get the Current Duration
-//     $releaseDate = Duration::whereRaw('? BETWEEN start_date AND DATE_ADD(start_date, INTERVAL 14 DAY)', 
-//         [$MovieReleaseDate->movies_release_date])
-//         ->first(['id', 'start_date']);
-
-//     if (!$releaseDate) {
-//         return response()->json(['error' => 'No matching duration found'], 404);
-//     }
-
-//     $placementList = DB::table('cinema_placements as cp')
-//     ->join('cinemas as c', 'c.id', '=', 'cp.cinema_id')
-//     ->leftJoin('bookings_detail as bd', 'cp.id', '=', 'bd.placement_id')
-//     ->leftJoin('bookings as b', 'bd.booking_id', '=', 'b.id')
-//     ->leftJoin('movies as m', 'b.movie_id', '=', 'm.id')
-//     ->select(
-//         'c.cinema_name',
-//         'cp.id as placement_id',
-//         'cp.placement_name',
-//         'cp.placement_width',
-//         'cp.placement_height',
-//         'cp.placement_price',
-//         'bd.duration_id',
-//         DB::raw("COALESCE(MAX(CASE WHEN bd.booking_status = 'accepted' THEN 1 ELSE 0 END), 0) as is_confirmed"),
-//         DB::raw("
-//             CASE 
-//                 WHEN MAX(CASE WHEN bd.booking_status = 'accepted' THEN m.company_id ELSE NULL END) = " . (int)$userCompanyId . " 
-//                 THEN MAX(CASE WHEN bd.booking_status = 'accepted' THEN m.movies_name ELSE NULL END) 
-//                 ELSE 'N/A' 
-//             END AS accepted_movie
-//         ")
-//     )
-//     ->groupBy('c.cinema_name', 'cp.id', 'cp.placement_name', 'bd.duration_id')
-//     ->get()
-//     ->groupBy('cinema_name')
-//     ->map(function ($group) {
-//         return [
-//             'cinema_name' => $group->first()->cinema_name,
-//             'placements' => $group->map(function ($placement) {
-//                 return [
-//                     'placement_id' => $placement->placement_id, 
-//                     'placement_name' => $placement->placement_name,
-//                     'placement_width' => $placement->placement_width,
-//                     'placement_height' => $placement->placement_height,
-//                     'placement_price' => $placement->placement_price,
-//                     'duration_id' => $placement->duration_id ?? null, // Handle NULL durations
-//                     'is_confirmed' => $placement->is_confirmed,
-//                     'accepted_movie' => $placement->accepted_movie // "N/A" if not same company
-//                 ];
-//             })->toArray()
-//         ];
-//     })->values();
-
-//     // Fetch Previous 3 Durations
-//     $previousDurations = Duration::where('start_date', '<', $releaseDate->start_date)
-//         ->orderBy('start_date', 'desc')
-//         ->limit(4)
-//         ->get(['id', 'start_date', 'production_deadline'])->reverse();
-//     // Fetch Next 3 Durations
-//     $nextDurations = Duration::where('start_date', '>', $releaseDate->start_date)
-//         ->orderBy('start_date', 'asc')
-//         ->limit(3)
-//         ->get(['id', 'start_date', 'production_deadline']);
-   
-//     $durations = $previousDurations->merge([$releaseDate])->merge($nextDurations);
-
-//     $userMovies = movies::where('company_id', $userCompanyId)->get(['id', 'movies_name']);
-
-    
+    //     $durations = $previousDurations->merge([$releaseDate])->merge($nextDurations);
 
 
 
-//     return Inertia::render('DistributorDashboard/BookingCalendar', [
-//         'releaseDate' => $releaseDate,
-//         'PlacementList' => $placementList,
-//         'durations' => $durations,
-//         'Movie_details' => $MovieReleaseDate,
-//         'userMovie' =>  $userMovies
-//     ]);
-// }
 
-// public function BookingCalendar($id)
-// {
-//     // Get authenticated user
-//     $user = auth()->user();
-//     $userCompanyId = $user->user_company_id ?? null; // ✅ Correct user company ID
 
-//     // Get Movie Details
-//     $MovieReleaseDate = movies::findOrFail($id, ['id', 'movies_name', 'movies_release_date', 'company_id']);
+    //     return Inertia::render('DistributorDashboard/BookingCalendar', [
+    //         'releaseDate' => $releaseDate,
+    //         'PlacementList' => $placementList,
+    //         'durations' => $durations,
+    //         'Movie_details' => $MovieReleaseDate
+    //     ]);
+    // }
+    #endregion
+    // public function BookingCalendar($id)
+    // {
+    //     // Get authenticated user
+    //     $user = auth()->user();
+    //     $userCompanyId = $user->user_company_id ?? null; // ✅ Correct user company ID
 
-//     // Get the Current Duration
-//     $releaseDate = Duration::whereRaw('? BETWEEN start_date AND DATE_ADD(start_date, INTERVAL 14 DAY)', 
-//         [$MovieReleaseDate->movies_release_date])
-//         ->first(['id', 'start_date']);
+    //     // Get Movie Details
+    //     $MovieReleaseDate = movies::findOrFail($id, ['id', 'movies_name', 'movies_release_date', 'company_id']);
 
-//     if (!$releaseDate) {
-//         return response()->json(['error' => 'No matching duration found'], 404);
-//     }
+    //     // Get the Current Duration
+    //     $releaseDate = Duration::whereRaw('? BETWEEN start_date AND DATE_ADD(start_date, INTERVAL 14 DAY)', 
+    //         [$MovieReleaseDate->movies_release_date])
+    //         ->first(['id', 'start_date']);
 
-//     $placementList = DB::table('cinema_placements as cp')
-//         ->join('cinemas as c', 'c.id', '=', 'cp.cinema_id')
-//         ->leftJoin('bookings_detail as bd', 'cp.id', '=', 'bd.placement_id')
-//         ->leftJoin('bookings as b', 'bd.booking_id', '=', 'b.id')
-//         ->leftJoin('movies as m', 'b.movie_id', '=', 'm.id')
-//         ->select(
-//             'c.cinema_name',
-//             'cp.id as placement_id',
-//             'cp.placement_name',
-//             'cp.placement_width',
-//             'cp.placement_height',
-//             'cp.placement_price',
+    //     if (!$releaseDate) {
+    //         return response()->json(['error' => 'No matching duration found'], 404);
+    //     }
 
-//             'bd.duration_id',
-//             DB::raw("COALESCE(MAX(CASE WHEN bd.booking_status = 'accepted' THEN 1 ELSE 0 END), 0) as is_confirmed"),
-//             DB::raw("
-//                 CASE 
-//                     WHEN MAX(CASE WHEN bd.booking_status = 'accepted' THEN m.company_id ELSE NULL END) = " . (int)$userCompanyId . " 
-//                     THEN MAX(CASE WHEN bd.booking_status = 'accepted' THEN m.movies_name ELSE NULL END) 
-//                     ELSE 'N/A' 
-//                 END AS accepted_movie
-//             ")
-//         )
-//         ->groupBy('c.cinema_name', 'cp.id', 'cp.placement_name', 'bd.duration_id')
-//         ->get()
-//         ->groupBy('cinema_name')
-//         ->map(function ($group) {
-//             return [
-//                 'cinema_name' => $group->first()->cinema_name,
-//                 'placements' => $group->map(function ($placement) {
-//                     return [
-//                         'placement_id' => $placement->placement_id, 
-//                         'placement_name' => $placement->placement_name,
-//                         'placement_width' => $placement->placement_width,
-//                         'placement_height' => $placement->placement_height,
-//                         'placement_price' => $placement->placement_price,
-//                         'duration_id' => $placement->duration_id ?? null, // Handle NULL durations
-//                         'is_confirmed' => $placement->is_confirmed,
-//                         'accepted_movie' => $placement->accepted_movie // "N/A" if not same company
-//                     ];
-//                 })->toArray()
-//             ];
-//         })->values();
+    //     $placementList = DB::table('cinema_placements as cp')
+    //     ->join('cinemas as c', 'c.id', '=', 'cp.cinema_id')
+    //     ->leftJoin('bookings_detail as bd', 'cp.id', '=', 'bd.placement_id')
+    //     ->leftJoin('bookings as b', 'bd.booking_id', '=', 'b.id')
+    //     ->leftJoin('movies as m', 'b.movie_id', '=', 'm.id')
+    //     ->select(
+    //         'c.cinema_name',
+    //         'cp.id as placement_id',
+    //         'cp.placement_name',
+    //         'cp.placement_width',
+    //         'cp.placement_height',
+    //         'cp.placement_price',
+    //         'bd.duration_id',
+    //         DB::raw("COALESCE(MAX(CASE WHEN bd.booking_status = 'accepted' THEN 1 ELSE 0 END), 0) as is_confirmed"),
+    //         DB::raw("
+    //             CASE 
+    //                 WHEN MAX(CASE WHEN bd.booking_status = 'accepted' THEN m.company_id ELSE NULL END) = " . (int)$userCompanyId . " 
+    //                 THEN MAX(CASE WHEN bd.booking_status = 'accepted' THEN m.movies_name ELSE NULL END) 
+    //                 ELSE 'N/A' 
+    //             END AS accepted_movie
+    //         ")
+    //     )
+    //     ->groupBy('c.cinema_name', 'cp.id', 'cp.placement_name', 'bd.duration_id')
+    //     ->get()
+    //     ->groupBy('cinema_name')
+    //     ->map(function ($group) {
+    //         return [
+    //             'cinema_name' => $group->first()->cinema_name,
+    //             'placements' => $group->map(function ($placement) {
+    //                 return [
+    //                     'placement_id' => $placement->placement_id, 
+    //                     'placement_name' => $placement->placement_name,
+    //                     'placement_width' => $placement->placement_width,
+    //                     'placement_height' => $placement->placement_height,
+    //                     'placement_price' => $placement->placement_price,
+    //                     'duration_id' => $placement->duration_id ?? null, // Handle NULL durations
+    //                     'is_confirmed' => $placement->is_confirmed,
+    //                     'accepted_movie' => $placement->accepted_movie // "N/A" if not same company
+    //                 ];
+    //             })->toArray()
+    //         ];
+    //     })->values();
 
-//     // Fetch Previous 3 Durations
-//     $previousDurations = Duration::where('start_date', '<', $releaseDate->start_date)
-//         ->orderBy('start_date', 'desc')
-//         ->limit(4)
-//         ->get(['id', 'start_date', 'production_deadline'])->reverse();
+    //     // Fetch Previous 3 Durations
+    //     $previousDurations = Duration::where('start_date', '<', $releaseDate->start_date)
+    //         ->orderBy('start_date', 'desc')
+    //         ->limit(4)
+    //         ->get(['id', 'start_date', 'production_deadline'])->reverse();
+    //     // Fetch Next 3 Durations
+    //     $nextDurations = Duration::where('start_date', '>', $releaseDate->start_date)
+    //         ->orderBy('start_date', 'asc')
+    //         ->limit(3)
+    //         ->get(['id', 'start_date', 'production_deadline']);
 
-//     // Fetch Next 3 Durations
-//     $nextDurations = Duration::where('start_date', '>', $releaseDate->start_date)
-//         ->orderBy('start_date', 'asc')
-//         ->limit(2)
-//         ->get(['id', 'start_date', 'production_deadline']);
+    //     $durations = $previousDurations->merge([$releaseDate])->merge($nextDurations);
 
-//     // **Fix Missing Production Deadline**
-//     $durations = $previousDurations->merge([$releaseDate])->merge($nextDurations);
+    //     $userMovies = movies::where('company_id', $userCompanyId)->get(['id', 'movies_name']);
 
-//     foreach ($durations as $index => $duration) {
-//         if (!$duration->production_deadline && $index > 0) {
-//             $duration->production_deadline = $durations[$index - 1]->start_date; // Set to previous duration's start_date
-//         }
-//     }
 
-//     $userMovies = movies::where('company_id', $userCompanyId)->get(['id', 'movies_name']);
 
-//     return Inertia::render('DistributorDashboard/BookingCalendar', [
-//         'releaseDate' => $releaseDate,
-//         'PlacementList' => $placementList,
-//         'durations' => $durations,
-//         'Movie_details' => $MovieReleaseDate,
-//         'userMovie' => $userMovies
-//     ]);
-// }
 
-#region Old BookingCalendar
-// public function BookingCalendar($id)
-// {
-//     // Get authenticated user
-//     $user = auth()->user();
-//     $userCompanyId = $user->user_company_id ?? null;
 
-//     // Get Movie Details
-//     $MovieReleaseDate = movies::findOrFail($id, ['id', 'movies_name', 'movies_release_date', 'company_id']);
+    //     return Inertia::render('DistributorDashboard/BookingCalendar', [
+    //         'releaseDate' => $releaseDate,
+    //         'PlacementList' => $placementList,
+    //         'durations' => $durations,
+    //         'Movie_details' => $MovieReleaseDate,
+    //         'userMovie' =>  $userMovies
+    //     ]);
+    // }
 
-//     // Get the Current Duration
-//     $releaseDate = Duration::whereRaw('? BETWEEN start_date AND DATE_ADD(start_date, INTERVAL 14 DAY)', 
-//         [$MovieReleaseDate->movies_release_date])
-//         ->first(['id', 'start_date']);
+    // public function BookingCalendar($id)
+    // {
+    //     // Get authenticated user
+    //     $user = auth()->user();
+    //     $userCompanyId = $user->user_company_id ?? null; // ✅ Correct user company ID
 
-//     if (!$releaseDate) {
-//         return response()->json(['error' => 'No matching duration found'], 404);
-//     }
+    //     // Get Movie Details
+    //     $MovieReleaseDate = movies::findOrFail($id, ['id', 'movies_name', 'movies_release_date', 'company_id']);
 
-//     // Updated: movie_id now from bookings_detail
-//     $placementList = DB::table('cinema_placements as cp')
-//         ->join('cinemas as c', 'c.id', '=', 'cp.cinema_id')
-//         ->leftJoin('bookings_detail as bd', 'cp.id', '=', 'bd.placement_id')
-//         ->leftJoin('movies as m', 'bd.movie_id', '=', 'm.id') // ใช้ movie_id จาก bookings_detail
-//         ->select(
-//             'c.cinema_name',
-//             'cp.id as placement_id',
-//             'cp.placement_name',
-//             'cp.placement_width',
-//             'cp.placement_height',
-//             'cp.placement_price',
-//             'bd.duration_id',
-//             DB::raw("COALESCE(MAX(CASE WHEN bd.booking_status = 'accepted' THEN 1 ELSE 0 END), 0) as is_confirmed"),
-//             DB::raw("
-//                 CASE 
-//                     WHEN MAX(CASE WHEN bd.booking_status = 'accepted' THEN m.company_id ELSE NULL END) = " . (int)$userCompanyId . " 
-//                     THEN MAX(CASE WHEN bd.booking_status = 'accepted' THEN m.movies_name ELSE NULL END) 
-//                     ELSE 'N/A' 
-//                 END AS accepted_movie
-//             ")
-//         )
-//         ->groupBy('c.cinema_name', 'cp.id', 'cp.placement_name', 'bd.duration_id')
-//         ->get()
-//         ->groupBy('cinema_name')
-//         ->map(function ($group) {
-//             return [
-//                 'cinema_name' => $group->first()->cinema_name,
-//                 'placements' => $group->map(function ($placement) {
-//                     return [
-//                         'placement_id' => $placement->placement_id, 
-//                         'placement_name' => $placement->placement_name,
-//                         'placement_width' => $placement->placement_width,
-//                         'placement_height' => $placement->placement_height,
-//                         'placement_price' => $placement->placement_price,
-//                         'duration_id' => $placement->duration_id ?? null,
-//                         'is_confirmed' => $placement->is_confirmed,
-//                         'accepted_movie' => $placement->accepted_movie,
-//                     ];
-//                 })->toArray()
-//             ];
-//         })->values();
+    //     // Get the Current Duration
+    //     $releaseDate = Duration::whereRaw('? BETWEEN start_date AND DATE_ADD(start_date, INTERVAL 14 DAY)', 
+    //         [$MovieReleaseDate->movies_release_date])
+    //         ->first(['id', 'start_date']);
 
-//     // Durations (previous, current, next)
-//     $previousDurations = Duration::where('start_date', '<', $releaseDate->start_date)
-//         ->orderBy('start_date', 'desc')
-//         ->limit(4)
-//         ->get(['id', 'start_date', 'production_deadline'])->reverse();
+    //     if (!$releaseDate) {
+    //         return response()->json(['error' => 'No matching duration found'], 404);
+    //     }
 
-//     $nextDurations = Duration::where('start_date', '>', $releaseDate->start_date)
-//         ->orderBy('start_date', 'asc')
-//         ->limit(2)
-//         ->get(['id', 'start_date', 'production_deadline']);
+    //     $placementList = DB::table('cinema_placements as cp')
+    //         ->join('cinemas as c', 'c.id', '=', 'cp.cinema_id')
+    //         ->leftJoin('bookings_detail as bd', 'cp.id', '=', 'bd.placement_id')
+    //         ->leftJoin('bookings as b', 'bd.booking_id', '=', 'b.id')
+    //         ->leftJoin('movies as m', 'b.movie_id', '=', 'm.id')
+    //         ->select(
+    //             'c.cinema_name',
+    //             'cp.id as placement_id',
+    //             'cp.placement_name',
+    //             'cp.placement_width',
+    //             'cp.placement_height',
+    //             'cp.placement_price',
 
-//     $durations = $previousDurations->merge([$releaseDate])->merge($nextDurations);
+    //             'bd.duration_id',
+    //             DB::raw("COALESCE(MAX(CASE WHEN bd.booking_status = 'accepted' THEN 1 ELSE 0 END), 0) as is_confirmed"),
+    //             DB::raw("
+    //                 CASE 
+    //                     WHEN MAX(CASE WHEN bd.booking_status = 'accepted' THEN m.company_id ELSE NULL END) = " . (int)$userCompanyId . " 
+    //                     THEN MAX(CASE WHEN bd.booking_status = 'accepted' THEN m.movies_name ELSE NULL END) 
+    //                     ELSE 'N/A' 
+    //                 END AS accepted_movie
+    //             ")
+    //         )
+    //         ->groupBy('c.cinema_name', 'cp.id', 'cp.placement_name', 'bd.duration_id')
+    //         ->get()
+    //         ->groupBy('cinema_name')
+    //         ->map(function ($group) {
+    //             return [
+    //                 'cinema_name' => $group->first()->cinema_name,
+    //                 'placements' => $group->map(function ($placement) {
+    //                     return [
+    //                         'placement_id' => $placement->placement_id, 
+    //                         'placement_name' => $placement->placement_name,
+    //                         'placement_width' => $placement->placement_width,
+    //                         'placement_height' => $placement->placement_height,
+    //                         'placement_price' => $placement->placement_price,
+    //                         'duration_id' => $placement->duration_id ?? null, // Handle NULL durations
+    //                         'is_confirmed' => $placement->is_confirmed,
+    //                         'accepted_movie' => $placement->accepted_movie // "N/A" if not same company
+    //                     ];
+    //                 })->toArray()
+    //             ];
+    //         })->values();
 
-//     foreach ($durations as $index => $duration) {
-//         if (!$duration->production_deadline && $index > 0) {
-//             $duration->production_deadline = $durations[$index - 1]->start_date;
-//         }
-//     }
+    //     // Fetch Previous 3 Durations
+    //     $previousDurations = Duration::where('start_date', '<', $releaseDate->start_date)
+    //         ->orderBy('start_date', 'desc')
+    //         ->limit(4)
+    //         ->get(['id', 'start_date', 'production_deadline'])->reverse();
 
-//     $userMovies = movies::where('company_id', $userCompanyId)->get(['id', 'movies_name']);
+    //     // Fetch Next 3 Durations
+    //     $nextDurations = Duration::where('start_date', '>', $releaseDate->start_date)
+    //         ->orderBy('start_date', 'asc')
+    //         ->limit(2)
+    //         ->get(['id', 'start_date', 'production_deadline']);
 
-//     return Inertia::render('DistributorDashboard/BookingCalendar', [
-//         'releaseDate' => $releaseDate,
-//         'PlacementList' => $placementList,
-//         'durations' => $durations,
-//         'Movie_details' => $MovieReleaseDate,
-//         'userMovie' => $userMovies
-//     ]);
-// }
-#endregion 
+    //     // **Fix Missing Production Deadline**
+    //     $durations = $previousDurations->merge([$releaseDate])->merge($nextDurations);
 
-public function BookingCalendar($id)
-{
-    $user = auth()->user();
-    $userCompanyId = $user->user_company_id ?? null;
+    //     foreach ($durations as $index => $duration) {
+    //         if (!$duration->production_deadline && $index > 0) {
+    //             $duration->production_deadline = $durations[$index - 1]->start_date; // Set to previous duration's start_date
+    //         }
+    //     }
 
-    $MovieReleaseDate = movies::findOrFail($id, ['id', 'movies_name', 'movies_release_date', 'company_id']);
+    //     $userMovies = movies::where('company_id', $userCompanyId)->get(['id', 'movies_name']);
 
-    $releaseDate = Duration::whereRaw('? BETWEEN start_date AND DATE_ADD(start_date, INTERVAL 14 DAY)', 
-        [$MovieReleaseDate->movies_release_date])
-        ->first(['id', 'start_date']);
+    //     return Inertia::render('DistributorDashboard/BookingCalendar', [
+    //         'releaseDate' => $releaseDate,
+    //         'PlacementList' => $placementList,
+    //         'durations' => $durations,
+    //         'Movie_details' => $MovieReleaseDate,
+    //         'userMovie' => $userMovies
+    //     ]);
+    // }
 
-    if (!$releaseDate) {
-        return response()->json(['error' => 'No matching duration found'], 404);
-    }
+    #region Old BookingCalendar
+    // public function BookingCalendar($id)
+    // {
+    //     // Get authenticated user
+    //     $user = auth()->user();
+    //     $userCompanyId = $user->user_company_id ?? null;
 
-    $placementList = DB::table('cinema_placements as cp')
-    ->join('cinemas as c', 'c.id', '=', 'cp.cinema_id')
-    ->join('company as comp', 'c.company_id', '=', 'comp.id') // ✅ join company
-    ->leftJoin('bookings_detail as bd', 'cp.id', '=', 'bd.placement_id')
-    ->leftJoin('movies as m', 'bd.movie_id', '=', 'm.id')
-    ->select(
-        'c.cinema_name',
-        'comp.company_brand_name', // ✅ add brand name
-        'cp.id as placement_id',
-        'cp.placement_name',
-        'cp.placement_width',
-        'cp.placement_height',
-        'cp.placement_price',
-        'bd.duration_id',
-        DB::raw("COALESCE(MAX(CASE WHEN bd.booking_status = 'accepted' THEN 1 ELSE 0 END), 0) as is_confirmed"),
-        DB::raw("
+    //     // Get Movie Details
+    //     $MovieReleaseDate = movies::findOrFail($id, ['id', 'movies_name', 'movies_release_date', 'company_id']);
+
+    //     // Get the Current Duration
+    //     $releaseDate = Duration::whereRaw('? BETWEEN start_date AND DATE_ADD(start_date, INTERVAL 14 DAY)', 
+    //         [$MovieReleaseDate->movies_release_date])
+    //         ->first(['id', 'start_date']);
+
+    //     if (!$releaseDate) {
+    //         return response()->json(['error' => 'No matching duration found'], 404);
+    //     }
+
+    //     // Updated: movie_id now from bookings_detail
+    //     $placementList = DB::table('cinema_placements as cp')
+    //         ->join('cinemas as c', 'c.id', '=', 'cp.cinema_id')
+    //         ->leftJoin('bookings_detail as bd', 'cp.id', '=', 'bd.placement_id')
+    //         ->leftJoin('movies as m', 'bd.movie_id', '=', 'm.id') // ใช้ movie_id จาก bookings_detail
+    //         ->select(
+    //             'c.cinema_name',
+    //             'cp.id as placement_id',
+    //             'cp.placement_name',
+    //             'cp.placement_width',
+    //             'cp.placement_height',
+    //             'cp.placement_price',
+    //             'bd.duration_id',
+    //             DB::raw("COALESCE(MAX(CASE WHEN bd.booking_status = 'accepted' THEN 1 ELSE 0 END), 0) as is_confirmed"),
+    //             DB::raw("
+    //                 CASE 
+    //                     WHEN MAX(CASE WHEN bd.booking_status = 'accepted' THEN m.company_id ELSE NULL END) = " . (int)$userCompanyId . " 
+    //                     THEN MAX(CASE WHEN bd.booking_status = 'accepted' THEN m.movies_name ELSE NULL END) 
+    //                     ELSE 'N/A' 
+    //                 END AS accepted_movie
+    //             ")
+    //         )
+    //         ->groupBy('c.cinema_name', 'cp.id', 'cp.placement_name', 'bd.duration_id')
+    //         ->get()
+    //         ->groupBy('cinema_name')
+    //         ->map(function ($group) {
+    //             return [
+    //                 'cinema_name' => $group->first()->cinema_name,
+    //                 'placements' => $group->map(function ($placement) {
+    //                     return [
+    //                         'placement_id' => $placement->placement_id, 
+    //                         'placement_name' => $placement->placement_name,
+    //                         'placement_width' => $placement->placement_width,
+    //                         'placement_height' => $placement->placement_height,
+    //                         'placement_price' => $placement->placement_price,
+    //                         'duration_id' => $placement->duration_id ?? null,
+    //                         'is_confirmed' => $placement->is_confirmed,
+    //                         'accepted_movie' => $placement->accepted_movie,
+    //                     ];
+    //                 })->toArray()
+    //             ];
+    //         })->values();
+
+    //     // Durations (previous, current, next)
+    //     $previousDurations = Duration::where('start_date', '<', $releaseDate->start_date)
+    //         ->orderBy('start_date', 'desc')
+    //         ->limit(4)
+    //         ->get(['id', 'start_date', 'production_deadline'])->reverse();
+
+    //     $nextDurations = Duration::where('start_date', '>', $releaseDate->start_date)
+    //         ->orderBy('start_date', 'asc')
+    //         ->limit(2)
+    //         ->get(['id', 'start_date', 'production_deadline']);
+
+    //     $durations = $previousDurations->merge([$releaseDate])->merge($nextDurations);
+
+    //     foreach ($durations as $index => $duration) {
+    //         if (!$duration->production_deadline && $index > 0) {
+    //             $duration->production_deadline = $durations[$index - 1]->start_date;
+    //         }
+    //     }
+
+    //     $userMovies = movies::where('company_id', $userCompanyId)->get(['id', 'movies_name']);
+
+    //     return Inertia::render('DistributorDashboard/BookingCalendar', [
+    //         'releaseDate' => $releaseDate,
+    //         'PlacementList' => $placementList,
+    //         'durations' => $durations,
+    //         'Movie_details' => $MovieReleaseDate,
+    //         'userMovie' => $userMovies
+    //     ]);
+    // }
+    #endregion 
+
+    public function BookingCalendar($id)
+    {
+        $user = auth()->user();
+        $userCompanyId = $user->user_company_id ?? null;
+
+        $MovieReleaseDate = movies::findOrFail($id, ['id', 'movies_name', 'movies_release_date', 'company_id']);
+
+        $releaseDate = Duration::whereRaw(
+            '? BETWEEN start_date AND DATE_ADD(start_date, INTERVAL 14 DAY)',
+            [$MovieReleaseDate->movies_release_date]
+        )
+            ->first(['id', 'start_date']);
+
+        if (!$releaseDate) {
+            return response()->json(['error' => 'No matching duration found'], 404);
+        }
+
+        $placementList = DB::table('cinema_placements as cp')
+            ->join('cinemas as c', 'c.id', '=', 'cp.cinema_id')
+            ->join('company as comp', 'c.company_id', '=', 'comp.id') // ✅ join company
+            ->leftJoin('bookings_detail as bd', 'cp.id', '=', 'bd.placement_id')
+            ->leftJoin('movies as m', 'bd.movie_id', '=', 'm.id')
+            ->select(
+                'c.cinema_name',
+                'comp.company_brand_name', // ✅ add brand name
+                'cp.id as placement_id',
+                'cp.placement_name',
+                'cp.placement_width',
+                'cp.placement_height',
+                'cp.placement_price',
+                'bd.duration_id',
+                DB::raw("COALESCE(MAX(CASE WHEN bd.booking_status = 'accepted' THEN 1 ELSE 0 END), 0) as is_confirmed"),
+                DB::raw("
             CASE 
                 WHEN MAX(CASE WHEN bd.booking_status = 'accepted' THEN m.company_id ELSE NULL END) = " . (int)$userCompanyId . " 
                 THEN MAX(CASE WHEN bd.booking_status = 'accepted' THEN m.movies_name ELSE NULL END) 
                 ELSE 'N/A' 
             END AS accepted_movie
         ")
-    )
-    ->groupBy(
-        'c.cinema_name',
-        'comp.company_brand_name', // ✅ group by brand
-        'cp.id',
-        'cp.placement_name',
-        'cp.placement_width',
-        'cp.placement_height',
-        'cp.placement_price',
-        'bd.duration_id'
-    )
-    ->get()
-    ->groupBy('company_brand_name') // ✅ group by brand name
-    ->map(function ($group) {
-        return [
-            'brand_name' => $group->first()->company_brand_name,
-            'cinemas' => $group->groupBy('cinema_name')->map(function ($cinemas) {
+            )
+            ->groupBy(
+                'c.cinema_name',
+                'comp.company_brand_name', // ✅ group by brand
+                'cp.id',
+                'cp.placement_name',
+                'cp.placement_width',
+                'cp.placement_height',
+                'cp.placement_price',
+                'bd.duration_id'
+            )
+            ->get()
+            ->groupBy('company_brand_name') // ✅ group by brand name
+            ->map(function ($group) {
                 return [
-                    'cinema_name' => $cinemas->first()->cinema_name,
-                    'placements' => $cinemas->map(function ($placement) {
+                    'brand_name' => $group->first()->company_brand_name,
+                    'cinemas' => $group->groupBy('cinema_name')->map(function ($cinemas) {
                         return [
-                            'placement_id' => $placement->placement_id, 
-                            'placement_name' => $placement->placement_name,
-                            'placement_width' => $placement->placement_width,
-                            'placement_height' => $placement->placement_height,
-                            'placement_price' => $placement->placement_price,
-                            'duration_id' => $placement->duration_id ?? null,
-                            'is_confirmed' => $placement->is_confirmed,
-                            'accepted_movie' => $placement->accepted_movie,
+                            'cinema_name' => $cinemas->first()->cinema_name,
+                            'placements' => $cinemas->map(function ($placement) {
+                                return [
+                                    'placement_id' => $placement->placement_id,
+                                    'placement_name' => $placement->placement_name,
+                                    'placement_width' => $placement->placement_width,
+                                    'placement_height' => $placement->placement_height,
+                                    'placement_price' => $placement->placement_price,
+                                    'duration_id' => $placement->duration_id ?? null,
+                                    'is_confirmed' => $placement->is_confirmed,
+                                    'accepted_movie' => $placement->accepted_movie,
+                                ];
+                            })->toArray()
                         ];
-                    })->toArray()
+                    })->values()
                 ];
-            })->values()
-        ];
-    })->values();
+            })->values();
 
-    $previousDurations = Duration::where('start_date', '<', $releaseDate->start_date)
-        ->orderBy('start_date', 'desc')
-        ->limit(4)
-        ->get(['id', 'start_date', 'production_deadline'])->reverse();
+        $previousDurations = Duration::where('start_date', '<', $releaseDate->start_date)
+            ->orderBy('start_date', 'desc')
+            ->limit(4)
+            ->get(['id', 'start_date', 'production_deadline'])->reverse();
 
-    $nextDurations = Duration::where('start_date', '>', $releaseDate->start_date)
-        ->orderBy('start_date', 'asc')
-        ->limit(2)
-        ->get(['id', 'start_date', 'production_deadline']);
+        $nextDurations = Duration::where('start_date', '>', $releaseDate->start_date)
+            ->orderBy('start_date', 'asc')
+            ->limit(2)
+            ->get(['id', 'start_date', 'production_deadline']);
 
-    $durations = $previousDurations->merge([$releaseDate])->merge($nextDurations);
+        $durations = $previousDurations->merge([$releaseDate])->merge($nextDurations);
 
-    foreach ($durations as $index => $duration) {
-        if (!$duration->production_deadline && $index > 0) {
-            $duration->production_deadline = $durations[$index - 1]->start_date;
+        foreach ($durations as $index => $duration) {
+            if (!$duration->production_deadline && $index > 0) {
+                $duration->production_deadline = $durations[$index - 1]->start_date;
+            }
         }
+
+        $userMovies = movies::where('company_id', $userCompanyId)->get(['id', 'movies_name']);
+
+        return Inertia::render('DistributorDashboard/BookingCalendar', [
+            'releaseDate' => $releaseDate,
+            'PlacementList' => $placementList,
+            'durations' => $durations,
+            'Movie_details' => $MovieReleaseDate,
+            'userMovie' => $userMovies,
+            'brands' => Company::pluck('company_brand_name', 'id')->toArray() // ใช้ใน dropdown
+        ]);
     }
 
-    $userMovies = movies::where('company_id', $userCompanyId)->get(['id', 'movies_name']);
+    public function changeAcceptedMovie(Request $request)
+    {
+        $request->validate([
+            'placement_id' => 'required|integer',
+            'duration_id' => 'required|integer',
+            'new_movie_id' => 'required|integer',
+        ]);
 
-    return Inertia::render('DistributorDashboard/BookingCalendar', [
-        'releaseDate' => $releaseDate,
-        'PlacementList' => $placementList,
-        'durations' => $durations,
-        'Movie_details' => $MovieReleaseDate,
-        'userMovie' => $userMovies,
-        'brands' => Company::pluck('company_brand_name', 'id')->toArray() // ใช้ใน dropdown
-    ]);
-}
+        $user = auth()->user();
+        $userCompanyId = $user->user_company_id;
 
-public function changeAcceptedMovie(Request $request)
-{
-    $request->validate([
-        'placement_id' => 'required|integer',
-        'duration_id' => 'required|integer',
-        'new_movie_id' => 'required|integer',
-    ]);
+        // ตรวจสอบว่าหนังใหม่เป็นของบริษัทตัวเอง
+        $newMovie = movies::where('id', $request->new_movie_id)
+            ->where('company_id', $userCompanyId)
+            ->first();
 
-    $user = auth()->user();
-    $userCompanyId = $user->user_company_id;
+        if (!$newMovie) {
+            return response()->json(['error' => 'Unauthorized or movie not found'], 403);
+        }
 
-    // ตรวจสอบว่าหนังใหม่เป็นของบริษัทตัวเอง
-    $newMovie = movies::where('id', $request->new_movie_id)
-        ->where('company_id', $userCompanyId)
-        ->first();
+        // ค้นหา bookings_detail ที่ได้รับการ accepted และเป็นของบริษัทตัวเอง
+        $bookingDetail = DB::table('bookings_detail as bd')
+            ->join('movies as m', 'bd.movie_id', '=', 'm.id')
+            ->where('bd.placement_id', $request->placement_id)
+            ->where('bd.duration_id', $request->duration_id)
+            ->where('bd.booking_status', 'accepted')
+            ->where('m.company_id', $userCompanyId)
+            ->select('bd.id as detail_id')
+            ->first();
 
-    if (!$newMovie) {
-        return response()->json(['error' => 'Unauthorized or movie not found'], 403);
+        if (!$bookingDetail) {
+            return response()->json(['error' => 'Booking not found or unauthorized'], 403);
+        }
+
+        // อัปเดต movie_id ในตาราง bookings_detail
+        DB::table('bookings_detail')
+            ->where('id', $bookingDetail->detail_id)
+            ->update(['movie_id' => $request->new_movie_id]);
+
+        return response()->json(['message' => 'Movie updated successfully']);
     }
-
-    // ค้นหา bookings_detail ที่ได้รับการ accepted และเป็นของบริษัทตัวเอง
-    $bookingDetail = DB::table('bookings_detail as bd')
-        ->join('movies as m', 'bd.movie_id', '=', 'm.id')
-        ->where('bd.placement_id', $request->placement_id)
-        ->where('bd.duration_id', $request->duration_id)
-        ->where('bd.booking_status', 'accepted')
-        ->where('m.company_id', $userCompanyId)
-        ->select('bd.id as detail_id')
-        ->first();
-
-    if (!$bookingDetail) {
-        return response()->json(['error' => 'Booking not found or unauthorized'], 403);
-    }
-
-    // อัปเดต movie_id ในตาราง bookings_detail
-    DB::table('bookings_detail')
-        ->where('id', $bookingDetail->detail_id)
-        ->update(['movie_id' => $request->new_movie_id]);
-
-    return response()->json(['message' => 'Movie updated successfully']);
-}
 
 
 
@@ -713,7 +729,7 @@ public function changeAcceptedMovie(Request $request)
 
     public function showCalendar()
     {
-        
+
         return Inertia::render('DistributorDashboard/PlacementCalendar');
     }
 }
